@@ -4,7 +4,7 @@ Pembaruan: 27 Oktober 2026. Prioritas: P0 wajib pada fase terkait, P1 berikutnya
 
 ## Milestone dan gate
 
-M0 dokumentasi/setup → M1 shell → M2 satu ruang → M3 satu karakter → M4 pathfinding/animasi → M5 delapan area → M6 workflow simulasi → M7 Mushola/istirahat → M8 backend/database/realtime → M9 satu AI → M10 enam AI → M11 Tauri/deployment. M2 tersedia sebagai pratinjau prosedural; M3–M4 parsial untuk satu sprite referensi dan gerak dasar. M5 parsial: map delapan area tersedia, tujuh representasi belum lengkap. M6 dan seterusnya belum dimulai.
+M0 dokumentasi/setup → M1 shell → M2 satu ruang → M3 satu karakter → M4 pathfinding/animasi → M5 delapan area → M6 workflow simulasi → M7 Mushola/istirahat → M8 backend/database/realtime → M9 satu AI → M10 enam AI → M11 Tauri/deployment. M2 tersedia sebagai pratinjau prosedural; M3–M4 parsial untuk satu sprite referensi dan gerak dasar. M5 hampir lengkap: map delapan area dan tujuh karakter tersedia, panel fungsi ruangan belum. M6 parsial: workflow task dan approval berupa simulasi di browser; PRAYER-001 dan seterusnya belum dimulai.
 
 ## M0 — Dokumentasi dan fondasi yang diizinkan sekarang
 
@@ -128,7 +128,7 @@ M0 dokumentasi/setup → M1 shell → M2 satu ruang → M3 satu karakter → M4 
 - Dependencies: OFFICE-001, DOC-002.
 - File/modul: assets/source/characters, assets/runtime/characters, packages/simulation.
 - Acceptance criteria: transparansi, anchor, frame size/directions, outline, skala furnitur dan identitas lolos QA visual.
-- Status: PARSIAL; Akira tampil memakai texture frame dari sheet asli dan blending runtime. Belum atlas transparan produksi, arah lengkap, atau portrait terpisah.
+- Status: SELESAI untuk tujuh karakter; atlas transparan tiga arah (bawah, samping, atas) dan portrait dibuat oleh scripts/build-sprites.mjs ke assets/runtime/characters. Arah samping lainnya memakai flip. Belum ada animasi kerja/duduk. Lihat MAP-002_REPORT.md.
 - Risiko: sheet tidak punya cukup frame/arah; jangan mengarang kesiapan.
 
 ### OFFICE-002 — Pathfinding, collision dan animasi
@@ -139,7 +139,7 @@ M0 dokumentasi/setup → M1 shell → M2 satu ruang → M3 satu karakter → M4 
 - Dependencies: OFFICE-001, SPRITE-001.
 - File/modul: packages/simulation, assets/runtime/maps.
 - Acceptance criteria: tidak menembus furniture/dinding; occlusion benar; FPS target diukur; task tetap ketika path gagal.
-- Status: PARSIAL; BFS grid, klik tujuan, kontrol DOM, jeda, reduced motion dan frame berjalan percobaan tersedia. Work/sit/review/approval/break, reservasi multi-karakter dan pengukuran FPS belum dikerjakan.
+- Status: PARSIAL; logika gerak dipisah ke walker.ts dan dites, dengan BFS grid, antrean tujuan, karakter lain sebagai penghalang dan occlusion furnitur. Pose work/sit/review/approval/break, reservasi tujuan multi-karakter dan pengukuran FPS belum dikerjakan.
 - Risiko: sprite/animasi tidak sinkron, deadlock jalur.
 
 ### OFFICE-003 — Delapan area dan tujuh representasi
@@ -150,7 +150,7 @@ M0 dokumentasi/setup → M1 shell → M2 satu ruang → M3 satu karakter → M4 
 - Dependencies: OFFICE-002, persetujuan hasil satu karakter untuk perluasan.
 - File/modul: assets/source/maps, assets/runtime, packages/simulation, apps/web.
 - Acceptance criteria: tepat delapan area, workstation owner jelas, akses panel tiap ruang, semua karakter lulus QA; tiada ruang tambahan.
-- Status: PARSIAL; map delapan area terhubung tersedia, dengan fokus kamera tiap area dan Akira sebagai karakter uji. Enam representasi tambahan serta panel fungsi ruangan belum dibuat. Lihat MAP-002_REPORT.md.
+- Status: PARSIAL; denah asli (Img/Map) menjadi peta delapan area terhubung dengan tujuh karakter. Panel fungsi tiap ruang belum dibuat.
 - Risiko: biaya authoring enam karakter dan performa scene.
 
 ## M6–M7 — Workflow simulasi dan aktivitas (belum diizinkan)
@@ -163,7 +163,7 @@ M0 dokumentasi/setup → M1 shell → M2 satu ruang → M3 satu karakter → M4 
 - Dependencies: OFFICE-003, UI-001.
 - File/modul: packages/contracts, apps/web, tests/.
 - Acceptance criteria: instruksi→Akira→owner→review; transisi ilegal ditolak; label Simulasi; progres tidak berasal dari animasi.
-- Status: BELUM DIMULAI; menunggu CEO.
+- Status: SIMULASI SELESAI (apps/web/src/tasks); instruksi→Akira→owner→review→Leo, transisi ilegal ditolak, berlabel Simulasi, data di memori. Belum terhubung ke avatar di peta, backend, atau AI.
 - Risiko: fake state bocor sebagai klaim backend/AI aktif.
 
 ### APPROVAL-001 — Approval/revisi simulasi
@@ -174,7 +174,7 @@ M0 dokumentasi/setup → M1 shell → M2 satu ruang → M3 satu karakter → M4 
 - Dependencies: TASK-001.
 - File/modul: apps/web, packages/contracts, packages/simulation.
 - Acceptance criteria: approve/revisi/tolak jelas; klik ulang idempotent di fake; output baru membatalkan approval lama; avatar tidak mengesahkan keputusan.
-- Status: BELUM DIMULAI; menunggu CEO.
+- Status: SIMULASI SELESAI; setujui/revisi/tolak per versi hasil, klik ulang idempoten, hasil baru membatalkan approval lama. Belum otorisasi server.
 - Risiko: UI approval dianggap otorisasi server yang belum ada.
 
 ### PRAYER-001 — Jadwal Mushola dan istirahat

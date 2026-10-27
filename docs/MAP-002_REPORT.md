@@ -40,3 +40,16 @@ Peta prosedural isometrik diganti dengan gambar `Img/Map/Denah Kantor Mewah 204.
 - Akira muncul di pintu masuk Lobby dan berjalan ke delapan area; diuji di browser ke Mushola, Pool Area, Break Lounge dan Command Room.
 - Tes otomatis: setiap area terjangkau dari pintu masuk dan dari area lain; furnitur, air dan dinding tidak bisa dilewati.
 - Batas: Akira selalu digambar di atas peta, jadi tidak tertutup furnitur gambar. Persegi penghalang adalah perkiraan; kalibrasi detail masih bisa disempurnakan. Interior Break Lounge di sisi kiri belum dicek jalur demi jalur.
+
+## Pembaruan lanjutan — karakter, occlusion, workflow simulasi
+
+- **Atlas transparan:** `node scripts/build-sprites.mjs` memotong tujuh sheet di `Img/Karakter` (tidak diubah) menjadi atlas PNG transparan di `assets/runtime/characters/` (baris bawah, samping, atas) plus `manifest.json` dan portrait per karakter. Latar dihapus dengan flood fill dari tepi sheet; sheet yang spritenya saling bersentuhan dipotong di kolom paling sepi. Arah samping lainnya memakai flip. Sisa tepi putih kecil di sekitar rambut Akira masih terlihat.
+- **Tujuh karakter di peta:** Akira dapat digerakkan; Leo, Aeri, Amy, Kuro, Mail dan Zegion berdiri di posisi awal dan menjadi penghalang bagi Akira. Mereka belum bergerak sendiri.
+- **Occlusion:** tiap furnitur tinggi digambar ulang dari peta yang sama di atas karakter yang berdiri di belakangnya (urutan kedalaman = tepi depan objek). Hanya bagian bawah objek yang memblokir jalan. Diuji dengan Akira berdiri di belakang meja dan resepsionis. Persegi objek adalah perkiraan, jadi sesekali sprite terpotong di tepi objek.
+- **Logika gerak:** dipisah dari Phaser ke `apps/web/src/office/walker.ts` dengan lima tes (langkah, antrean tujuan, penolakan, frame panjang, reduced motion).
+- **Task dan approval (simulasi):** `apps/web/src/tasks`, halaman Task board dan Approval inbox. Layanan palsu di memori, berlabel Simulasi. Enam tes mencakup alur, versi hasil, idempotensi, dan alasan revisi. Belum terhubung ke avatar di peta.
+- **Belum dikerjakan:** PRAYER-001 (butuh sumber jadwal dan lokasi), backend/database/realtime, AI nyata, desktop/deploy (butuh kredensial, anggaran, dan keputusan Anda), animasi kerja/duduk, FPS.
+
+## Pembaruan — peta bersih
+
+`node scripts/clean-map.mjs` membuat `assets/runtime/maps/office.png` dari denah asli (`Img/Map` tidak diubah) dengan menghapus delapan papan nama area, kotak legenda, logo kiri-atas dan tulisan "A STRONGER TEAM" di luar bangunan. Layar dashboard "204" di Command Room, papan "204" di Lobby, dan papan "204" di Approval Room tetap karena bagian dari ruangan. Papan nama di lantai marmer (Main Workspace, Lobby) diganti dengan salinan lantai di sekitarnya; sisanya diisi dengan interpolasi warna sehingga masih ada noda buram halus, terutama bekas papan Mushola di luar dinding. Peta bukan tilemap: gambar datar sebagai latar, dan grid jalan, penghalang serta lapisan occlusion adalah lapisan tak terlihat di atasnya.

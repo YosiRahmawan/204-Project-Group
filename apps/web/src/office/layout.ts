@@ -1,6 +1,7 @@
 import type { Cell } from './model';
-// Everything below is measured in pixels of Img/Map/Denah Kantor Mewah 204. Project Group.png.
-type Rect = readonly [x: number, y: number, w: number, h: number];
+// Everything below is measured in pixels of assets/runtime/maps/office.png (the
+// reference plan with its labels removed, same 1536 × 1024 size).
+export type Rect = readonly [x: number, y: number, w: number, h: number];
 export type Room = {
   id: string;
   name: string;
@@ -96,33 +97,51 @@ const specs: RoomSpec[] = [
     goal: { x: 1230, y: 285 },
   },
 ];
-// Furniture, walls, trees and water that the character must walk around.
-const blocks: Rect[] = [
-  [665, 665, 205, 85],
-  [700, 755, 135, 45],
-  [470, 765, 80, 95],
-  [975, 765, 80, 95],
-  [575, 405, 130, 95],
-  [835, 405, 130, 95],
-  [575, 535, 130, 90],
-  [835, 535, 130, 90],
-  [745, 405, 45, 60],
-  [745, 545, 45, 55],
-  [730, 350, 80, 40],
-  [1120, 330, 150, 82],
-  [1120, 425, 150, 100],
-  [1130, 585, 270, 145],
-  [170, 420, 290, 80],
-  [215, 530, 135, 105],
-  [360, 520, 50, 140],
-  [625, 100, 125, 100],
-  [850, 70, 85, 210],
+// Water has no height, so characters are never hidden behind it.
+const flat: Rect[] = [
   [1070, 145, 255, 125],
   [1335, 135, 85, 65],
+];
+// Furniture, walls and trees, as [x, y, w, h, foot]. The whole rectangle is drawn in
+// front of characters standing behind it; only the lowest `foot` pixels (the floor
+// contact area, default all of it) block walking.
+type Occluder = readonly [
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  foot?: number,
+];
+export const occluders: Occluder[] = [
+  [665, 665, 205, 85],
+  [700, 755, 135, 45, 30],
+  [470, 765, 80, 95],
+  [975, 765, 80, 95],
+  [575, 405, 130, 95, 60],
+  [835, 405, 130, 95, 60],
+  [575, 535, 130, 90, 55],
+  [835, 535, 130, 90, 55],
+  [745, 405, 45, 60, 25],
+  [745, 545, 45, 55, 25],
+  [730, 350, 80, 40],
+  [1120, 330, 150, 82, 30],
+  [1120, 425, 150, 100, 70],
+  [1130, 585, 270, 145, 70],
+  [170, 420, 290, 80, 40],
+  [215, 530, 135, 105, 70],
+  [360, 520, 50, 140],
+  [625, 100, 125, 100, 30],
+  [850, 70, 85, 210, 40],
   [990, 155, 50, 105],
-  [1075, 215, 75, 75],
-  [1340, 215, 90, 75],
-  [1010, 80, 110, 50],
+  [1075, 215, 75, 75, 40],
+  [1340, 215, 90, 75, 40],
+  [1010, 80, 110, 50, 30],
+];
+const footprint = ([x, y, w, h, foot = h]: Occluder): Rect => [
+  x,
+  y + h - foot,
+  w,
+  foot,
 ];
 const inRect = (px: number, py: number, [x, y, w, h]: Rect) =>
   px >= x && px < x + w && py >= y && py < y + h;
@@ -133,7 +152,10 @@ for (let x = 0; x < 96; x++)
     const px = x * grid + grid / 2;
     const py = y * grid + grid / 2;
     const room = specs.find((r) => r.floor.some((f) => inRect(px, py, f)));
-    if (room && !blocks.some((b) => inRect(px, py, b)))
+    if (
+      room &&
+      ![...flat, ...occluders.map(footprint)].some((b) => inRect(px, py, b))
+    )
       owner.set(`${x},${y}`, room.id);
   }
 export const isOpen = (x: number, y: number) => owner.has(`${x},${y}`);

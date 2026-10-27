@@ -1,0 +1,100 @@
+{
+  "akira": {
+    "frame": {
+      "width": 116,
+      "height": 198
+    },
+    "columns": 6,
+    "scale": 0.381,
+    "sideFacing": "right",
+    "frames": {
+      "down": 6,
+      "side": 6,
+      "up": 6
+    }
+  },
+  "aeri": {
+    "frame": {
+      "width": 136,
+      "height": 218
+    },
+    "columns": 4,
+    "scale": 0.333,
+    "sideFacing": "right",
+    "frames": {
+      "down": 4,
+      "side": 4,
+      "up": 4
+    }
+  },
+  "amy": {
+    "frame": {
+      "width": 139,
+      "height": 251
+    },
+    "columns": 4,
+    "scale": 0.29,
+    "sideFacing": "right",
+    "frames": {
+      "down": 4,
+      "side": 4,
+      "up": 4
+    }
+  },
+  "kuro": {
+    "frame": {
+      "width": 128,
+      "height": 263
+    },
+    "columns": 4,
+    "scale": 0.276,
+    "sideFacing": "left",
+    "frames": {
+      "down": 4,
+      "side": 4,
+      "up": 4
+    }
+  },
+  "leo": {
+    "frame": {
+      "width": 133,
+      "height": 256
+    },
+    "columns": 4,
+    "scale": 0.285,
+    "sideFacing": "left",
+    "frames": {
+      "down": 4,
+      "side": 4,
+      "up": 4
+    }
+  },
+  "mail": {
+    "frame": {
+      "width": 118,
+      "height": 251
+    },
+    "columns": 4,
+    "scale": 0.289,
+    "sideFacing": "right",
+    "frames": {
+      "down": 4,
+      "side": 4,
+      "up": 4
+    }
+  },
+  "zegion": {
+    "frame": {
+      "width": 126,
+      "height": 280
+    },
+    "columns": 6,
+    "scale": 0.335,
+    "sideFacing": "left",
+    "frames": {
+      "down": 6,
+      "side": 6,
+      "up": 6
+    }
+  }
+}

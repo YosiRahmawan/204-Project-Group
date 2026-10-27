@@ -3,6 +3,7 @@ import officeImage from '../../../../Img/Map/Denah Kantor Mewah 204. Project Gro
 import { team, type Member } from './team';
 import type { PageId } from './navigation';
 import { Office } from '../office/Office';
+import { ApprovalInbox, TaskBoard } from '../tasks/TaskPages';
 
 export function OfficeReference() {
   const [failed, setFailed] = useState(false);
@@ -180,6 +181,8 @@ export function PageContent({
         </section>
       </>
     );
+  if (page === 'tasks') return <TaskBoard />;
+  if (page === 'approvals') return <ApprovalInbox />;
   if (page === 'team')
     return (
       <section className="team-page">
@@ -239,22 +242,6 @@ export function PageContent({
       </section>
     );
   const copy = {
-    tasks: {
-      marker: '01',
-      title: 'Belum ada workflow task',
-      description:
-        'Pembuatan, pembagian, dan pelacakan tugas tersedia setelah fase workflow simulasi. Belum ada task API yang dihubungkan.',
-      action: 'Kenali koordinator tim',
-      href: '#/team',
-    },
-    approvals: {
-      marker: '02',
-      title: 'Approval belum diaktifkan',
-      description:
-        'Hasil yang memerlukan persetujuan nantinya muncul di sini. Keputusan tetap menjadi kewenangan Leo sebagai CEO manusia.',
-      action: 'Lihat Approval Room',
-      href: '#/office',
-    },
     monitoring: {
       marker: '03',
       title: 'AI belum terhubung',

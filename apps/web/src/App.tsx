@@ -108,7 +108,7 @@ export function App() {
             <p>
               Delapan area terhubung.
               <br />
-              Satu karakter percobaan · AI belum aktif.
+              Tujuh karakter di peta · AI belum aktif.
             </p>
           </div>
           <div className="owner-profile">
@@ -171,8 +171,8 @@ export function App() {
           <footer className="workspace-footer">
             <span>204. PROJECT GROUP</span>
             <span>
-              Map delapan area · satu karakter uji. Integrasi AI belum
-              diaktifkan.
+              Map delapan area · tujuh karakter, Akira dapat digerakkan.
+              Integrasi AI belum diaktifkan.
             </span>
           </footer>
         </main>
@@ -219,7 +219,7 @@ export function App() {
                 <dd>
                   {selected.name === 'Akira'
                     ? 'Pratinjau gerak antar-area kantor'
-                    : 'Belum diimplementasikan'}
+                    : 'Berdiri di kantor (belum bergerak)'}
                 </dd>
               </div>
             </dl>

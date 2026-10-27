@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { findPath, toScreen, toGrid, isWalkable, columns, rows } from './model';
 import { rooms, spawn, roomAt } from './layout';
+import { characters } from './characters';
 
 test('all eight areas have reachable destinations from the entrance', () => {
   expect(rooms.map((r) => r.name)).toEqual([
@@ -61,4 +62,17 @@ test('projection is reversible', () => {
   for (let x = 0; x < columns; x++)
     for (let y = 0; y < rows; y++)
       expect(toGrid(toScreen({ x, y }))).toEqual({ x, y });
+});
+
+test('every character starts on its own walkable cell inside an area', () => {
+  const cells = characters.map((c) => toGrid(c.home));
+  for (const cell of cells) {
+    expect(isWalkable(cell)).toBe(true);
+    expect(roomAt(cell)).toBeDefined();
+  }
+  expect(new Set(cells.map((c) => `${c.x},${c.y}`)).size).toBe(cells.length);
+  // Everyone can be reached from the controlled character's start.
+  for (const cell of cells)
+    if (cell.x !== spawn.x || cell.y !== spawn.y)
+      expect(findPath(spawn, cell).length).toBeGreaterThan(0);
 });

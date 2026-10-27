@@ -981,3 +981,62 @@ figure {
     animation: none !important;
   }
 }
+.task-page {
+  display: grid;
+  gap: 16px;
+}
+.task-form {
+  display: grid;
+  gap: 8px;
+  max-width: 640px;
+}
+.task-form textarea,
+.task-decide input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font: inherit;
+  background: var(--surface);
+}
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.task-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+.task-card p {
+  margin: 0;
+}
+.task-top,
+.task-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+.task-actions {
+  justify-content: flex-start;
+}
+.task-decide {
+  display: grid;
+  gap: 8px;
+}
+.task-error {
+  color: #9b2c2c;
+  margin: 0;
+}
+.task-history {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+}

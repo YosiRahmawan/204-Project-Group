@@ -1,16 +1,18 @@
 import Phaser from 'phaser';
-import akiraSheet from '../../../../Img/Karakter/Akira-General manager-Lead cordinator.png';
-import mapImage from '../../../../Img/Map/Denah Kantor Mewah 204. Project Group.png';
+import mapImage from '../../../../assets/runtime/maps/office.png';
+import { characters, spriteInfo, type Character } from './characters';
+import { mapHeight, mapWidth, toGrid, toScreen, type Cell } from './model';
+import { occluders, roomAt, spawn, type Room } from './layout';
 import {
-  findPath,
-  toGrid,
-  toScreen,
-  isWalkable,
-  mapHeight,
-  mapWidth,
-  type Cell,
-} from './model';
-import { spawn, roomAt, type Room } from './layout';
+  advance,
+  goTo,
+  heading,
+  newWalker,
+  snapToGoal,
+  walkerPoint,
+  type Heading,
+  type Walker,
+} from './walker';
 
 export type OfficeControls = {
   focus: (room: Room) => void;
@@ -23,6 +25,20 @@ export type OfficeControls = {
   destroy: () => void;
 };
 
+type Actor = {
+  character: Character;
+  walker: Walker;
+  sprite: Phaser.GameObjects.Sprite;
+  shadow: Phaser.GameObjects.Ellipse;
+  label: Phaser.GameObjects.Text;
+  facing: Heading;
+  elapsed: number;
+};
+
+// Sprite sheet rows: 0 = facing down, 1 = sideways, 2 = facing up.
+const rowOf = { down: 0, left: 1, right: 1, up: 2 } as const;
+const controlled = 'akira';
+
 export function mountOffice(
   parent: HTMLElement,
   report: (message: string) => void,
@@ -31,15 +47,8 @@ export function mountOffice(
   let paused = false;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   class OfficeScene extends Phaser.Scene {
-    cell: Cell = { ...spawn };
-    route: Cell[] = [];
-    pending: Cell | null = null;
-    progress = 0;
-    avatar!: Phaser.GameObjects.Sprite;
-    label!: Phaser.GameObjects.Text;
-    shadow!: Phaser.GameObjects.Ellipse;
+    actors: Actor[] = [];
     marker!: Phaser.GameObjects.Graphics;
-    elapsed = 0;
     loaded = false;
     dragging = false;
     pressedOnCanvas = false;
@@ -50,44 +59,27 @@ export function mountOffice(
     }
     preload() {
       this.load.image('map', mapImage);
-      this.load.image('akira', akiraSheet);
+      for (const c of characters) {
+        const { frame } = spriteInfo[c.id];
+        this.load.spritesheet(c.id, c.url, {
+          frameWidth: frame.width,
+          frameHeight: frame.height,
+        });
+      }
     }
     create() {
       this.add.image(0, 0, 'map').setOrigin(0).setDepth(-100);
+      // The same map, cropped around each tall object and sorted by its front edge,
+      // so a character standing behind furniture is drawn under it.
+      for (const [x, y, w, h] of occluders)
+        this.add
+          .image(0, 0, 'map')
+          .setOrigin(0)
+          .setCrop(x, y, w, h)
+          .setDepth(y + h);
       this.marker = this.add.graphics().setDepth(0.5);
-      const source = this.textures.exists('akira');
-      if (source) {
-        const texture = this.textures.get('akira');
-        texture.add('idle', 0, 12, 145, 100, 200);
-        for (let i = 0; i < 6; i++) {
-          texture.add(`walk-right-${i}`, 0, 12 + i * 108, 365, 100, 192);
-          texture.add(`walk-left-${i}`, 0, 12 + i * 108, 579, 100, 198);
-        }
-      }
-      this.shadow = this.add.ellipse(0, 0, 30, 12, 0x514a3e, 0.16);
-      this.avatar = this.add
-        .sprite(
-          0,
-          0,
-          source ? 'akira' : '__MISSING',
-          source ? 'idle' : undefined,
-        )
-        .setOrigin(0.5, 1)
-        .setScale(source ? 0.36 : 1);
-      // Runtime blending suppresses the white reference-sheet background.
-      // This is a reference preview, not a transparent production atlas.
-      if (source) this.avatar.setBlendMode(Phaser.BlendModes.MULTIPLY);
-      this.label = this.add
-        .text(0, 0, 'AKIRA', {
-          fontFamily: 'Segoe UI',
-          fontSize: '10px',
-          color: '#443d35',
-          backgroundColor: '#ffffff',
-          padding: { x: 5, y: 3 },
-        })
-        .setOrigin(0.5, 1);
+      this.actors = characters.map((c) => this.addActor(c));
       this.loaded = true;
-      this.place(toScreen(this.cell));
       this.fit();
       this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
         this.pressedOnCanvas = pointer.event.target === this.game.canvas;
@@ -121,10 +113,55 @@ export function mountOffice(
       });
       ready();
       report(
-        source
+        this.textures.exists(controlled)
           ? 'Akira siap. Klik lantai atau pilih tujuan.'
-          : 'Gambar Akira gagal dimuat. Penanda sementara digunakan; muat ulang untuk mencoba lagi.',
+          : 'Gambar karakter gagal dimuat; muat ulang untuk mencoba lagi.',
       );
+    }
+    addActor(character: Character): Actor {
+      const info = spriteInfo[character.id];
+      const home = toGrid(character.home);
+      const cell = character.id === controlled ? { ...spawn } : home;
+      const walker = newWalker(cell);
+      const scale = info.scale;
+      const shadow = this.add.ellipse(0, 0, 30, 12, 0x514a3e, 0.16);
+      const sprite = this.add
+        .sprite(0, 0, character.id, 0)
+        .setOrigin(0.5, 1)
+        .setScale(scale);
+      const label = this.add
+        .text(0, 0, character.name, {
+          fontFamily: 'Segoe UI',
+          fontSize: '10px',
+          color: '#443d35',
+          backgroundColor: '#ffffff',
+          padding: { x: 5, y: 3 },
+        })
+        .setOrigin(0.5, 1)
+        .setDepth(3000);
+      const actor: Actor = {
+        character,
+        walker,
+        sprite,
+        shadow,
+        label,
+        facing: 'down',
+        elapsed: 0,
+      };
+      this.draw(actor);
+      return actor;
+    }
+    // Other characters stand still, so they are obstacles for the one being moved.
+    blockedByOthers(actor: Actor) {
+      const taken = new Set(
+        this.actors
+          .filter((a) => a !== actor)
+          .map((a) => `${a.walker.cell.x},${a.walker.cell.y}`),
+      );
+      return (cell: Cell) => !taken.has(`${cell.x},${cell.y}`);
+    }
+    get akira() {
+      return this.actors.find((a) => a.character.id === controlled)!;
     }
     fit() {
       if (!this.loaded) return;
@@ -136,33 +173,27 @@ export function mountOffice(
     }
     go(goal: Cell) {
       if (!this.loaded) return;
-      if (!isWalkable(goal)) {
+      const actor = this.akira;
+      const { walker } = actor;
+      const result = goTo(walker, goal, this.blockedByOthers(actor));
+      if (result === 'blocked') {
         report(
-          'Tujuan terhalang dinding, furnitur, tanaman, air kolam, atau di luar kantor.',
+          'Tujuan terhalang dinding, furnitur, tanaman, air kolam, karakter lain, atau di luar kantor.',
         );
         return;
       }
-      // Finish the current adjacent segment before rerouting; never cut a desk corner.
-      if (this.progress > 0) {
-        this.pending = goal;
-        return;
-      }
-      this.route = findPath(this.cell, goal);
-      if (
-        !this.route.length &&
-        (this.cell.x !== goal.x || this.cell.y !== goal.y)
-      ) {
+      if (result === 'unreachable') {
         report('Tujuan tidak memiliki jalur yang dapat dilalui.');
         return;
       }
-      this.pending = null;
+      if (result === 'queued') return;
       const p = toScreen(goal);
       this.marker
         .clear()
         .lineStyle(2, 0x9a6b13)
         .strokeEllipse(p.x, p.y, 25, 12);
-      const points = [this.cell, ...this.route].map(toScreen);
       this.marker.lineStyle(2, 0xb58a32, 0.65);
+      const points = [walker.cell, ...walker.route].map(toScreen);
       for (let i = 1; i < points.length; i++)
         this.marker.lineBetween(
           points[i - 1]!.x,
@@ -171,56 +202,53 @@ export function mountOffice(
           points[i]!.y,
         );
       report(
-        this.route.length
+        result === 'started'
           ? `Akira menuju ${roomAt(goal)?.name ?? 'tujuan'} · petak ${goal.x + 1}, ${goal.y + 1}.`
-          : `Akira di petak ${this.cell.x + 1}, ${this.cell.y + 1}.`,
+          : `Akira di petak ${walker.cell.x + 1}, ${walker.cell.y + 1}.`,
       );
     }
-    place(p: Cell) {
-      this.avatar.setPosition(p.x, p.y + 3).setDepth(p.y + 2);
-      this.shadow.setPosition(p.x, p.y + 1).setDepth(p.y);
-      this.label.setPosition(p.x, p.y - 68).setDepth(1000);
+    draw(actor: Actor) {
+      const { sprite, shadow, label, walker, character } = actor;
+      const info = spriteInfo[character.id];
+      const p = walkerPoint(walker);
+      sprite.setPosition(p.x, p.y + 3).setDepth(p.y + 3);
+      shadow.setPosition(p.x, p.y + 1).setDepth(p.y);
+      label.setPosition(p.x, p.y - info.frame.height * info.scale - 2);
+      const moving = walker.route.length > 0;
+      const row = rowOf[actor.facing];
+      const count = info.frames[row === 0 ? 'down' : row === 1 ? 'side' : 'up'];
+      // Idle uses the first frame; walking cycles through the row.
+      const column = moving ? Math.floor(actor.elapsed / 140) % count : 0;
+      sprite.setFrame(row * info.columns + column);
+      // The sheet draws the sideways walk in one direction only.
+      sprite.setFlipX(
+        (actor.facing === 'left' || actor.facing === 'right') &&
+          actor.facing !== info.sideFacing,
+      );
+    }
+    arrived(actor: Actor) {
+      report(
+        `Akira tiba di ${roomAt(actor.walker.cell)?.name} · petak ${actor.walker.cell.x + 1}, ${actor.walker.cell.y + 1}.`,
+      );
     }
     update(_time: number, delta: number) {
-      if (!this.loaded || paused || !this.route.length) return;
+      if (!this.loaded || paused) return;
+      const actor = this.akira;
+      const { walker } = actor;
+      if (!walker.route.length) return;
       if (reducedMotion.matches) {
-        const goal = this.pending ?? this.route.at(-1)!;
-        this.cell = goal;
-        this.route = [];
-        this.pending = null;
-        this.progress = 0;
-        if (this.textures.exists('akira')) this.avatar.setFrame('idle');
-        this.place(toScreen(goal));
-        report(
-          `Akira tiba di ${roomAt(goal)?.name} · petak ${goal.x + 1}, ${goal.y + 1}.`,
-        );
+        snapToGoal(walker);
+        this.draw(actor);
+        this.arrived(actor);
         return;
       }
-      const target = this.route[0]!;
-      this.progress = Math.min(1, this.progress + Math.min(delta, 50) / 90);
-      this.elapsed += delta;
-      const a = toScreen(this.cell),
-        b = toScreen(target);
-      this.place({
-        x: a.x + (b.x - a.x) * this.progress,
-        y: a.y + (b.y - a.y) * this.progress,
-      });
-      if (this.textures.exists('akira'))
-        this.avatar.setFrame(
-          `walk-${b.x >= a.x ? 'right' : 'left'}-${Math.floor(this.elapsed / 140) % 6}`,
-        );
-      if (this.progress === 1) {
-        this.cell = target;
-        this.route.shift();
-        this.progress = 0;
-        if (this.pending) this.go(this.pending);
-        if (!this.route.length) {
-          if (this.textures.exists('akira')) this.avatar.setFrame('idle');
-          report(
-            `Akira tiba di ${roomAt(this.cell)?.name} · petak ${this.cell.x + 1}, ${this.cell.y + 1}.`,
-          );
-        }
-      }
+      actor.elapsed += delta;
+      const next = heading(walker);
+      if (next) actor.facing = next;
+      const state = advance(walker, delta, this.blockedByOthers(actor));
+      if (state === 'arrived') this.arrived(actor);
+      // After a step the next heading may differ; keep the walk cycle in sync.
+      this.draw(actor);
     }
   }
   const scene = new OfficeScene();
