@@ -151,33 +151,35 @@ export function App() {
         </div>
       </aside>
       <div className="workspace">
-        <header className="topbar">
-          <div className="breadcrumb">
-            Workspace <span aria-hidden="true">/</span>{' '}
-            <strong>{page.label}</strong>
-          </div>
-          <div className="topbar-right">
-            <span className="environment-tag">LOCAL DEVELOPMENT</span>
-            <span className="topbar-owner">
-              Leo <Face name="Leo" className="owner-avatar" />
+        <div className="sticky-header">
+          <header className="topbar">
+            <div className="breadcrumb">
+              Workspace <span aria-hidden="true">/</span>{' '}
+              <strong>{page.label}</strong>
+            </div>
+            <div className="topbar-right">
+              <span className="environment-tag">LOCAL DEVELOPMENT</span>
+              <span className="topbar-owner">
+                Leo <Face name="Leo" className="owner-avatar" />
+              </span>
+            </div>
+          </header>
+          <div className="connection-bar">
+            <span className={`connection-status ${status}`} role="status">
+              <span className="status-dot" aria-hidden="true" />
+              {statusLabels[status]}
             </span>
+            <span className="connection-description">
+              Health API saja · AI belum aktif
+            </span>
+            <button
+              className="retry-button"
+              onClick={retry}
+              disabled={status === 'loading'}
+            >
+              {status === 'loading' ? 'Memeriksa…' : 'Periksa ulang'}
+            </button>
           </div>
-        </header>
-        <div className="connection-bar">
-          <span className={`connection-status ${status}`} role="status">
-            <span className="status-dot" aria-hidden="true" />
-            {statusLabels[status]}
-          </span>
-          <span className="connection-description">
-            Health API saja · AI belum aktif
-          </span>
-          <button
-            className="retry-button"
-            onClick={retry}
-            disabled={status === 'loading'}
-          >
-            {status === 'loading' ? 'Memeriksa…' : 'Periksa ulang'}
-          </button>
         </div>
         <main id="main-content" className="main-content">
           <div className="page-heading">
