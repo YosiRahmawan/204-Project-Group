@@ -1,0 +1,295 @@
+import { useState } from 'react';
+import officeImage from '../../../../Img/Map/Denah Kantor Mewah 204. Project Group.png';
+import { team, type Member } from './team';
+import type { PageId } from './navigation';
+import { Office } from '../office/Office';
+
+export function OfficeReference() {
+  const [failed, setFailed] = useState(false);
+  return (
+    <figure className="office-reference">
+      <div className="section-heading">
+        <span className="eyebrow">THE WORKPLACE</span>
+        <span className="subtle-label">
+          Referensi desain · bukan peta interaktif
+        </span>
+      </div>
+      {failed ? (
+        <div className="image-fallback" role="status">
+          Gambar referensi tidak dapat dimuat. Daftar delapan area tersedia pada
+          halaman Kantor virtual.
+        </div>
+      ) : (
+        <img
+          src={officeImage}
+          width="1536"
+          height="1024"
+          alt="Referensi kantor isometrik 204. PROJECT GROUP dengan delapan area, interior putih, taman, dan kolam."
+          onError={() => setFailed(true)}
+        />
+      )}
+      <figcaption>
+        <span>Tempat kolaborasi berikutnya.</span>
+        <span className="subtle-label">8 area yang direncanakan</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+export function TeamList({
+  onSelect,
+  full = false,
+}: {
+  onSelect: (member: Member) => void;
+  full?: boolean;
+}) {
+  return (
+    <div className={full ? 'team-grid' : 'team-list'}>
+      {team.map((member) => (
+        <button
+          className="member"
+          key={member.name}
+          onClick={() => onSelect(member)}
+        >
+          <span className={`avatar ${member.tone}`} aria-hidden="true">
+            {member.initials}
+          </span>
+          <span className="member-copy">
+            <strong>{member.name}</strong>
+            <span>{member.role}</span>
+            {full && <small>{member.specialty}</small>}
+          </span>
+          <span className="member-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const areas = [
+  'Lobby',
+  'Main Workspace',
+  'Approval Room',
+  'Command Room',
+  'Mushola',
+  'Break Lounge',
+  'Garden',
+  'Pool Area',
+];
+
+export function PageContent({
+  page,
+  onSelect,
+}: {
+  page: PageId;
+  onSelect: (member: Member) => void;
+}) {
+  if (page === 'overview')
+    return (
+      <>
+        <section className="overview-intro">
+          <div>
+            <span className="eyebrow">YOUR VIRTUAL HEADQUARTERS</span>
+            <h2>
+              Selamat datang, Leo<span className="gold">.</span>
+            </h2>
+            <p>
+              Sebuah ruang untuk tim, ide, dan langkah besar Anda berikutnya.
+            </p>
+          </div>
+          <a className="button button-dark" href="#/office">
+            Lihat kantor <span aria-hidden="true">↗</span>
+          </a>
+        </section>
+        <div className="summary-strip">
+          <div>
+            <span>Struktur tim</span>
+            <strong>
+              06 <small>AI direncanakan</small>
+            </strong>
+          </div>
+          <div>
+            <span>Pemilik & keputusan</span>
+            <strong>
+              01 <small>CEO manusia</small>
+            </strong>
+          </div>
+          <div>
+            <span>Eksekusi AI</span>
+            <strong className="summary-text">Belum aktif</strong>
+          </div>
+          <div>
+            <span>Penggunaan AI</span>
+            <strong className="summary-text">Belum tersedia</strong>
+          </div>
+        </div>
+        <div className="overview-grid">
+          <OfficeReference />
+          <section className="team-section">
+            <div className="section-heading">
+              <h2>Kenali tim Anda</h2>
+              <a className="text-link" href="#/team">
+                Semua <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+            <p className="section-note">
+              Identitas tim · belum terhubung ke AI
+            </p>
+            <TeamList onSelect={onSelect} />
+          </section>
+        </div>
+        <section className="next-section">
+          <div>
+            <span className="eyebrow">LANGKAH BERIKUTNYA</span>
+            <h2>Fondasi yang siap bertumbuh.</h2>
+            <p>
+              Delapan area kantor kini terhubung dan dapat dijelajahi bersama
+              Akira. Penyempurnaan sprite tim menjadi tahap berikutnya.
+            </p>
+          </div>
+          <a className="text-link" href="#/tasks">
+            Lihat status workflow <span aria-hidden="true">→</span>
+          </a>
+        </section>
+      </>
+    );
+  if (page === 'office')
+    return (
+      <>
+        <Office />
+        <details className="office-reference-details">
+          <summary>Lihat referensi kantor lengkap</summary>
+          <OfficeReference />
+        </details>
+        <section className="area-section">
+          <h2>Delapan area, satu kantor</h2>
+          <p className="section-note">
+            Seluruh area dapat dijelajahi. Fungsi pekerjaan, approval,
+            monitoring AI, dan jadwal salat belum diaktifkan.
+          </p>
+          <ol className="area-list">
+            {areas.map((area, index) => (
+              <li key={area}>
+                <span>{String(index + 1).padStart(2, '0')}</span>
+                {area}
+              </li>
+            ))}
+          </ol>
+        </section>
+      </>
+    );
+  if (page === 'team')
+    return (
+      <section className="team-page">
+        <div className="section-heading">
+          <h2>Tim 204.</h2>
+          <span className="badge">6 AI direncanakan</span>
+        </div>
+        <p className="section-note">
+          Klik profil untuk mengenal perannya. Belum ada agent yang menjalankan
+          pekerjaan.
+        </p>
+        <TeamList full onSelect={onSelect} />
+        <div className="owner-note">
+          <span className="avatar owner-avatar" aria-hidden="true">
+            L
+          </span>
+          <div>
+            <strong>Leo · CEO manusia</strong>
+            <p>
+              Pemilik, pemberi arahan, dan pengambil keputusan akhir. Leo bukan
+              AI Agent ketujuh.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  if (page === 'settings')
+    return (
+      <section className="settings-page">
+        <span className="eyebrow">DEVELOPMENT WORKSPACE</span>
+        <h2>Pengaturan belum diaktifkan</h2>
+        <p>
+          Preferensi lokasi, pengingat ibadah, izin, dan anggaran akan
+          ditambahkan pada fase terkait.
+        </p>
+        <dl className="settings-list">
+          <div>
+            <dt>Nama produk</dt>
+            <dd>204. PROJECT GROUP</dd>
+          </div>
+          <div>
+            <dt>Mode saat ini</dt>
+            <dd>Development lokal · pratinjau kantor</dd>
+          </div>
+          <div>
+            <dt>Penyimpanan preferensi</dt>
+            <dd>Belum tersedia</dd>
+          </div>
+          <div>
+            <dt>Koneksi AI / Hermes</dt>
+            <dd>Belum dikonfigurasi</dd>
+          </div>
+        </dl>
+        <p className="section-note">
+          Halaman ini bersifat informasi. Tidak menyimpan data atau kredensial.
+        </p>
+      </section>
+    );
+  const copy = {
+    tasks: {
+      marker: '01',
+      title: 'Belum ada workflow task',
+      description:
+        'Pembuatan, pembagian, dan pelacakan tugas tersedia setelah fase workflow simulasi. Belum ada task API yang dihubungkan.',
+      action: 'Kenali koordinator tim',
+      href: '#/team',
+    },
+    approvals: {
+      marker: '02',
+      title: 'Approval belum diaktifkan',
+      description:
+        'Hasil yang memerlukan persetujuan nantinya muncul di sini. Keputusan tetap menjadi kewenangan Leo sebagai CEO manusia.',
+      action: 'Lihat Approval Room',
+      href: '#/office',
+    },
+    monitoring: {
+      marker: '03',
+      title: 'AI belum terhubung',
+      description:
+        'Eksekusi, token, dan biaya belum tersedia. Status backend terhubung hanya menunjukkan health API, bukan aktivitas AI.',
+      action: 'Lihat struktur tim',
+      href: '#/team',
+    },
+    activity: {
+      marker: '04',
+      title: 'Belum ada riwayat pekerjaan',
+      description:
+        'Riwayat dan audit log akan berasal dari workflow backend. Belum ada sumber log pekerjaan yang dihubungkan.',
+      action: 'Kembali ke ringkasan',
+      href: '#/overview',
+    },
+  }[page];
+  return (
+    <section className="empty-state">
+      <span className="empty-marker" aria-hidden="true">
+        {copy.marker}
+      </span>
+      <span className="badge">Fase berikutnya</span>
+      <h2>{copy.title}</h2>
+      <p>{copy.description}</p>
+      <a className="button" href={copy.href}>
+        {copy.action} <span aria-hidden="true">→</span>
+      </a>
+      <details className="workflow-details">
+        <summary>Bagaimana alur pekerjaan nantinya?</summary>
+        <p>
+          Instruksi CEO → analisis Akira → pembagian ke agent → pengerjaan →
+          review → persetujuan atau revisi CEO → finalisasi.
+        </p>
+      </details>
+    </section>
+  );
+}
