@@ -1,17 +1,20 @@
-import { blocked, props, rooms } from './layout';
+import { isOpen, rooms } from './layout';
 export type Cell = { x: number; y: number };
-export const columns = 30;
-export const rows = 30;
-export const desks = props.filter((p) => p.kind === 'desk');
+// The reference map is 1536 × 1024 px; the nav grid is screen-aligned, 16 px per cell.
+export const mapWidth = 1536;
+export const mapHeight = 1024;
+export const tile = 16;
+export const columns = mapWidth / tile;
+export const rows = mapHeight / tile;
 export const destinations = rooms.map((r) => ({
   name: r.name,
   ...r.destination,
 }));
 export function toScreen({ x, y }: Cell): Cell {
-  return { x: (x - y) * 32, y: (x + y) * 16 };
+  return { x: x * tile + tile / 2, y: y * tile + tile / 2 };
 }
 export function toGrid({ x, y }: Cell): Cell {
-  return { x: Math.round(x / 64 + y / 32), y: Math.round(y / 32 - x / 64) };
+  return { x: Math.floor(x / tile), y: Math.floor(y / tile) };
 }
 export function isWalkable({ x, y }: Cell): boolean {
   return (
@@ -21,7 +24,7 @@ export function isWalkable({ x, y }: Cell): boolean {
     x < columns &&
     y >= 0 &&
     y < rows &&
-    !blocked.has(`${x},${y}`)
+    isOpen(x, y)
   );
 }
 const key = ({ x, y }: Cell) => `${x},${y}`;

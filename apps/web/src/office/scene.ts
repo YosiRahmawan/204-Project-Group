@@ -1,8 +1,15 @@
 import Phaser from 'phaser';
 import akiraSheet from '../../../../Img/Karakter/Akira-General manager-Lead cordinator.png';
-import { findPath, toGrid, toScreen, isWalkable, type Cell } from './model';
-
-import { renderMap } from './render-map';
+import mapImage from '../../../../Img/Map/Denah Kantor Mewah 204. Project Group.png';
+import {
+  findPath,
+  toGrid,
+  toScreen,
+  isWalkable,
+  mapHeight,
+  mapWidth,
+  type Cell,
+} from './model';
 import { spawn, roomAt, type Room } from './layout';
 
 export type OfficeControls = {
@@ -42,10 +49,11 @@ export function mountOffice(
       super('office-map');
     }
     preload() {
+      this.load.image('map', mapImage);
       this.load.image('akira', akiraSheet);
     }
     create() {
-      renderMap(this);
+      this.add.image(0, 0, 'map').setOrigin(0).setDepth(-100);
       this.marker = this.add.graphics().setDepth(0.5);
       const source = this.textures.exists('akira');
       if (source) {
@@ -121,8 +129,10 @@ export function mountOffice(
     fit() {
       if (!this.loaded) return;
       const camera = this.cameras.main;
-      camera.setZoom(Math.min(camera.width / 2050, camera.height / 1120, 1));
-      camera.centerOn(0, 450);
+      camera.setZoom(
+        Math.min(camera.width / mapWidth, camera.height / mapHeight, 1),
+      );
+      camera.centerOn(mapWidth / 2, mapHeight / 2);
     }
     go(goal: Cell) {
       if (!this.loaded) return;
@@ -187,7 +197,7 @@ export function mountOffice(
         return;
       }
       const target = this.route[0]!;
-      this.progress = Math.min(1, this.progress + Math.min(delta, 50) / 140);
+      this.progress = Math.min(1, this.progress + Math.min(delta, 50) / 90);
       this.elapsed += delta;
       const a = toScreen(this.cell),
         b = toScreen(target);
@@ -229,19 +239,15 @@ export function mountOffice(
   return {
     focus: (room) => {
       if (!scene.loaded) return;
-      const center = toScreen({
-        x: room.x + (room.w - 1) / 2,
-        y: room.y + (room.h - 1) / 2,
-      });
       const camera = scene.cameras.main;
       camera.setZoom(
         Math.min(
-          camera.width / ((room.w + room.h) * 32 + 100),
-          camera.height / ((room.w + room.h) * 16 + 160),
-          1.4,
+          camera.width / (room.w + 80),
+          camera.height / (room.h + 80),
+          2,
         ),
       );
-      camera.centerOn(center.x, center.y - 25);
+      camera.centerOn(room.x + room.w / 2, room.y + room.h / 2);
     },
     move: (goal) => scene.go(goal),
     zoom: (factor) => {

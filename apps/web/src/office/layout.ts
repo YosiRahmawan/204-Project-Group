@@ -1,4 +1,6 @@
 import type { Cell } from './model';
+// Everything below is measured in pixels of Img/Map/Denah Kantor Mewah 204. Project Group.png.
+type Rect = readonly [x: number, y: number, w: number, h: number];
 export type Room = {
   id: string;
   name: string;
@@ -7,196 +9,146 @@ export type Room = {
   y: number;
   w: number;
   h: number;
-  color: number;
   destination: Cell;
 };
-export const rooms: Room[] = [
+type RoomSpec = Pick<Room, 'id' | 'name' | 'note'> & {
+  floor: Rect[];
+  goal: Cell;
+};
+const specs: RoomSpec[] = [
   {
     id: 'lobby',
     name: 'Lobby',
     note: 'Welcome to 204.',
-    x: 8,
-    y: 24,
-    w: 14,
-    h: 6,
-    color: 0xf1ede3,
-    destination: { x: 14, y: 27 },
+    floor: [
+      [470, 745, 600, 160],
+      [655, 905, 215, 85],
+    ],
+    goal: { x: 760, y: 830 },
   },
   {
     id: 'workspace',
     name: 'Main Workspace',
     note: 'Create • collaborate • grow',
-    x: 8,
-    y: 9,
-    w: 14,
-    h: 15,
-    color: 0xfaf9f4,
-    destination: { x: 14, y: 20 },
+    floor: [[515, 355, 515, 390]],
+    goal: { x: 770, y: 505 },
   },
   {
     id: 'approval',
     name: 'Approval Room',
     note: 'Meeting & review',
-    x: 22,
-    y: 9,
-    w: 8,
-    h: 10,
-    color: 0xf3eee4,
-    destination: { x: 24, y: 16 },
+    floor: [
+      [1030, 330, 300, 230],
+      [1150, 560, 80, 25],
+    ],
+    goal: { x: 1300, y: 480 },
   },
   {
     id: 'command',
     name: 'Command Room',
     note: 'Owner dashboard',
-    x: 22,
-    y: 19,
-    w: 8,
-    h: 11,
-    color: 0xe8eeeb,
-    destination: { x: 25, y: 26 },
+    floor: [
+      [1070, 585, 380, 215],
+      [1060, 765, 20, 80],
+    ],
+    goal: { x: 1250, y: 770 },
   },
   {
     id: 'mushola',
     name: 'Mushola',
     note: 'Prayer room',
-    x: 0,
-    y: 9,
-    w: 8,
-    h: 8,
-    color: 0xe8eee1,
-    destination: { x: 5, y: 13 },
+    floor: [
+      [300, 300, 190, 105],
+      [190, 300, 110, 105],
+      [490, 335, 25, 65],
+    ],
+    goal: { x: 400, y: 380 },
   },
   {
     id: 'lounge',
     name: 'Break Lounge',
     note: 'Rest & recharge',
-    x: 0,
-    y: 17,
-    w: 8,
-    h: 13,
-    color: 0xf0e7d9,
-    destination: { x: 5, y: 22 },
+    floor: [
+      [105, 440, 385, 210],
+      [490, 520, 25, 80],
+    ],
+    goal: { x: 160, y: 570 },
   },
   {
     id: 'garden',
     name: 'Garden',
     note: 'A moment to breathe',
-    x: 0,
-    y: 0,
-    w: 14,
-    h: 9,
-    color: 0xc8d8b2,
-    destination: { x: 10, y: 5 },
+    floor: [
+      [585, 100, 405, 190],
+      [555, 290, 90, 65],
+      [890, 290, 110, 65],
+    ],
+    goal: { x: 700, y: 255 },
   },
   {
     id: 'pool',
     name: 'Pool Area',
     note: 'Relax & refresh',
-    x: 14,
-    y: 0,
-    w: 16,
-    h: 9,
-    color: 0xe5d9be,
-    destination: { x: 17, y: 5 },
+    floor: [
+      [1000, 100, 450, 200],
+      [1050, 300, 60, 35],
+    ],
+    goal: { x: 1230, y: 285 },
   },
 ];
-export const spawn = { x: 14, y: 27 };
-export const roomAt = ({ x, y }: Cell) =>
-  rooms.find((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
-export type Prop = Cell & {
-  w: number;
-  h: number;
-  kind:
-    | 'desk'
-    | 'plant'
-    | 'sofa'
-    | 'table'
-    | 'reception'
-    | 'monitor'
-    | 'rug'
-    | 'water'
-    | 'bench'
-    | 'chair'
-    | 'lounger';
-  label?: string;
-};
-export const props: Prop[] = [
-  ...[11, 15, 18].flatMap((x, i) =>
-    [13, 17].map((y, j) => ({
-      x,
-      y,
-      w: 2,
-      h: 1,
-      kind: 'desk' as const,
-      label: ['AKIRA', 'AERI', 'AMY', 'KURO', 'MAIL', 'ZEGION'][i * 2 + j]!,
-    })),
-  ),
-  { x: 11, y: 26, w: 3, h: 1, kind: 'reception', label: '204. PROJECT GROUP' },
-  { x: 17, y: 26, w: 3, h: 1, kind: 'sofa' },
-  { x: 25, y: 12, w: 2, h: 3, kind: 'table' },
-  { x: 25, y: 11, w: 1, h: 1, kind: 'chair' },
-  { x: 25, y: 15, w: 1, h: 1, kind: 'chair' },
-  { x: 25, y: 10, w: 3, h: 1, kind: 'monitor', label: 'REVIEW' },
-  { x: 24, y: 21, w: 4, h: 1, kind: 'monitor', label: '204. COMMAND' },
-  { x: 25, y: 24, w: 2, h: 1, kind: 'desk', label: 'LEO' },
-  ...[2, 4].flatMap((x) =>
-    [11, 14].map((y) => ({ x, y, w: 1, h: 1, kind: 'rug' as const })),
-  ),
-  { x: 1, y: 19, w: 3, h: 1, kind: 'sofa' },
-  { x: 1, y: 24, w: 1, h: 3, kind: 'sofa' },
-  { x: 3, y: 23, w: 2, h: 2, kind: 'table' },
-  { x: 3, y: 22, w: 1, h: 1, kind: 'chair' },
-  { x: 3, y: 25, w: 1, h: 1, kind: 'chair' },
-  { x: 2, y: 28, w: 3, h: 1, kind: 'reception', label: 'COFFEE' },
-  { x: 19, y: 2, w: 8, h: 4, kind: 'water' },
-  { x: 20, y: 7, w: 2, h: 1, kind: 'lounger' },
-  { x: 24, y: 7, w: 2, h: 1, kind: 'lounger' },
-  { x: 5, y: 4, w: 3, h: 1, kind: 'bench' },
-  ...[
-    { x: 2, y: 2 },
-    { x: 5, y: 2 },
-    { x: 9, y: 2 },
-    { x: 2, y: 6 },
-    { x: 11, y: 7 },
-    { x: 16, y: 2 },
-    { x: 28, y: 6 },
-    { x: 9, y: 10 },
-    { x: 20, y: 22 },
-    { x: 1, y: 10 },
-    { x: 6, y: 28 },
-    { x: 28, y: 17 },
-    { x: 28, y: 28 },
-    { x: 9, y: 28 },
-    { x: 20, y: 28 },
-  ].map((p) => ({ ...p, w: 1, h: 1, kind: 'plant' as const })),
+// Furniture, walls, trees and water that the character must walk around.
+const blocks: Rect[] = [
+  [665, 665, 205, 85],
+  [700, 755, 135, 45],
+  [470, 765, 80, 95],
+  [975, 765, 80, 95],
+  [575, 405, 130, 95],
+  [835, 405, 130, 95],
+  [575, 535, 130, 90],
+  [835, 535, 130, 90],
+  [745, 405, 45, 60],
+  [745, 545, 45, 55],
+  [730, 350, 80, 40],
+  [1120, 330, 150, 82],
+  [1120, 425, 150, 100],
+  [1130, 585, 270, 145],
+  [170, 420, 290, 80],
+  [215, 530, 135, 105],
+  [360, 520, 50, 140],
+  [625, 100, 125, 100],
+  [850, 70, 85, 210],
+  [1070, 145, 255, 125],
+  [1335, 135, 85, 65],
+  [990, 155, 50, 105],
+  [1075, 215, 75, 75],
+  [1340, 215, 90, 75],
+  [1010, 80, 110, 50],
 ];
-const doorKeys = new Set<string>();
-function door(x: number, y: number, w: number, h: number) {
-  for (let i = x; i < x + w; i++)
-    for (let j = y; j < y + h; j++) doorKeys.add(`${i},${j}`);
-}
-door(10, 8, 2, 2);
-door(18, 8, 2, 2);
-door(7, 12, 2, 2);
-door(7, 20, 2, 2);
-door(21, 13, 2, 2);
-door(21, 21, 2, 2);
-door(14, 23, 2, 2);
-door(7, 26, 2, 2);
-door(25, 18, 2, 2);
-door(13, 4, 2, 2);
-door(14, 29, 2, 1);
-export const walls: Cell[] = [];
-for (let x = 0; x < 30; x++)
-  for (let y = 0; y < 30; y++) {
-    const r = roomAt({ x, y })!;
-    if (
-      (x === r.x || x === r.x + r.w - 1 || y === r.y || y === r.y + r.h - 1) &&
-      !doorKeys.has(`${x},${y}`)
-    )
-      walls.push({ x, y });
+const inRect = (px: number, py: number, [x, y, w, h]: Rect) =>
+  px >= x && px < x + w && py >= y && py < y + h;
+const grid = 16;
+const owner = new Map<string, string>();
+for (let x = 0; x < 96; x++)
+  for (let y = 0; y < 64; y++) {
+    const px = x * grid + grid / 2;
+    const py = y * grid + grid / 2;
+    const room = specs.find((r) => r.floor.some((f) => inRect(px, py, f)));
+    if (room && !blocks.some((b) => inRect(px, py, b)))
+      owner.set(`${x},${y}`, room.id);
   }
-export const blocked = new Set(walls.map((p) => `${p.x},${p.y}`));
-for (const p of props)
-  for (let x = p.x; x < p.x + p.w; x++)
-    for (let y = p.y; y < p.y + p.h; y++) blocked.add(`${x},${y}`);
+export const isOpen = (x: number, y: number) => owner.has(`${x},${y}`);
+export const rooms: Room[] = specs.map(({ floor, goal, ...room }) => {
+  const x = Math.min(...floor.map((f) => f[0]));
+  const y = Math.min(...floor.map((f) => f[1]));
+  return {
+    ...room,
+    x,
+    y,
+    w: Math.max(...floor.map((f) => f[0] + f[2])) - x,
+    h: Math.max(...floor.map((f) => f[1] + f[3])) - y,
+    destination: { x: Math.floor(goal.x / grid), y: Math.floor(goal.y / grid) },
+  };
+});
+export const spawn = { x: 47, y: 53 };
+export const roomAt = ({ x, y }: Cell) =>
+  rooms.find((r) => r.id === owner.get(`${x},${y}`));

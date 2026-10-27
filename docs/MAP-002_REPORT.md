@@ -32,3 +32,11 @@ Enam representasi tambahan, atlas transparan, animasi bekerja/istirahat/interaks
 Server lokal dijalankan kembali untuk pratinjau di `http://127.0.0.1:5173/#/office`. Jika berhenti, jalankan `corepack pnpm dev` dari root proyek.
 
 ![Map delapan area](screenshots/map-002-desktop.png)
+
+## Pembaruan 27 Oktober 2026 — denah asli sebagai peta
+
+Peta prosedural isometrik diganti dengan gambar `Img/Map/Denah Kantor Mewah 204. Project Group.png` (1536 × 1024) yang ditampilkan apa adanya. Di atasnya ada grid jalan 16 px sejajar layar (96 × 64 petak) tanpa render. Lantai, penghalang (meja, sofa, kolam, pohon, dinding) dan pintu ditulis sebagai persegi dalam piksel gambar di `apps/web/src/office/layout.ts`, lalu dijadikan petak jalan saat modul dimuat. BFS empat arah tetap dipakai. `render-map.ts` dihapus.
+
+- Akira muncul di pintu masuk Lobby dan berjalan ke delapan area; diuji di browser ke Mushola, Pool Area, Break Lounge dan Command Room.
+- Tes otomatis: setiap area terjangkau dari pintu masuk dan dari area lain; furnitur, air dan dinding tidak bisa dilewati.
+- Batas: Akira selalu digambar di atas peta, jadi tidak tertutup furnitur gambar. Persegi penghalang adalah perkiraan; kalibrasi detail masih bisa disempurnakan. Interior Break Lounge di sisi kiri belum dicek jalur demi jalur.
