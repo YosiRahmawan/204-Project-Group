@@ -1,3 +1,3 @@
 # Runtime assets
 
-Belum ada aset siap runtime. Sprite transparan, atlas metadata, tilemap dan collision akan disiapkan setelah approval fase aset.
+Atlas karakter transparan (`characters/`) dibuat oleh `node scripts/build-sprites.mjs` dari `Img/Karakter`. Peta kantor digambar dari kode (`apps/web/src/office`), bukan aset gambar.

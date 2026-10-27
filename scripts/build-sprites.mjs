@@ -306,6 +306,48 @@ function spriteRows(parts, cols, count) {
   });
 }
 
+// Square head-and-shoulders crop from the top of a portrait, averaged down to size × size.
+function faceSquare(portrait, size) {
+  const side = Math.min(portrait.w, portrait.h);
+  const left = (portrait.w - side) >> 1;
+  const out = new Uint8Array(size * size * 4);
+  const step = side / size;
+  for (let oy = 0; oy < size; oy++)
+    for (let ox = 0; ox < size; ox++) {
+      let r = 0,
+        g = 0,
+        b = 0,
+        a = 0,
+        n = 0;
+      for (
+        let y = Math.floor(oy * step);
+        y < Math.max(Math.floor(oy * step) + 1, Math.floor((oy + 1) * step));
+        y++
+      )
+        for (
+          let x = Math.floor(ox * step);
+          x < Math.max(Math.floor(ox * step) + 1, Math.floor((ox + 1) * step));
+          x++
+        ) {
+          const i = (y * portrait.w + left + x) * 4;
+          const alpha = portrait.data[i + 3];
+          r += portrait.data[i] * alpha;
+          g += portrait.data[i + 1] * alpha;
+          b += portrait.data[i + 2] * alpha;
+          a += alpha;
+          n++;
+        }
+      const o = (oy * size + ox) * 4;
+      if (a) {
+        out[o] = r / a;
+        out[o + 1] = g / a;
+        out[o + 2] = b / a;
+      }
+      out[o + 3] = a / n;
+    }
+  return out;
+}
+
 mkdirSync(OUT, { recursive: true });
 const manifest = {};
 for (const c of characters) {
@@ -346,11 +388,11 @@ for (const c of characters) {
   writeFileSync(`${OUT}${c.id}.png`, encodePng(atlasW, atlasH, atlas));
   const portraitPart = parts
     .filter((p) => p.y1 - p.y0 >= 300)
-    .sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0)[0];
+    .sort((a, b) => b.area - a.area)[0];
   const portrait = cut(sheet, labels, new Set([portraitPart.id]), portraitPart);
   writeFileSync(
-    `${OUT}${c.id}-portrait.png`,
-    encodePng(portrait.w, portrait.h, portrait.data),
+    `${OUT}${c.id}-face.png`,
+    encodePng(128, 128, faceSquare(portrait, 128)),
   );
   const heights = down.map((f) => f.h).sort((a, b) => a - b);
   manifest[c.id] = {

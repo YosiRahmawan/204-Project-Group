@@ -50,6 +50,16 @@ Peta prosedural isometrik diganti dengan gambar `Img/Map/Denah Kantor Mewah 204.
 - **Task dan approval (simulasi):** `apps/web/src/tasks`, halaman Task board dan Approval inbox. Layanan palsu di memori, berlabel Simulasi. Enam tes mencakup alur, versi hasil, idempotensi, dan alasan revisi. Belum terhubung ke avatar di peta.
 - **Belum dikerjakan:** PRAYER-001 (butuh sumber jadwal dan lokasi), backend/database/realtime, AI nyata, desktop/deploy (butuh kredensial, anggaran, dan keputusan Anda), animasi kerja/duduk, FPS.
 
-## Pembaruan — peta bersih
+## Pembaruan — peta digambar dari kode
 
-`node scripts/clean-map.mjs` membuat `assets/runtime/maps/office.png` dari denah asli (`Img/Map` tidak diubah) dengan menghapus delapan papan nama area, kotak legenda, logo kiri-atas dan tulisan "A STRONGER TEAM" di luar bangunan. Layar dashboard "204" di Command Room, papan "204" di Lobby, dan papan "204" di Approval Room tetap karena bagian dari ruangan. Papan nama di lantai marmer (Main Workspace, Lobby) diganti dengan salinan lantai di sekitarnya; sisanya diisi dengan interpolasi warna sehingga masih ada noda buram halus, terutama bekas papan Mushola di luar dinding. Peta bukan tilemap: gambar datar sebagai latar, dan grid jalan, penghalang serta lapisan occlusion adalah lapisan tak terlihat di atasnya.
+Peta foto diganti dengan peta yang digambar dari kode (Phaser Graphics, vektor), sehingga tetap tajam saat diperbesar dan tidak ada tempelan label. Gambar di `Img/Map` kini hanya referensi desain di halaman Ringkasan.
+
+- **Denah** ada di `apps/web/src/office/layout.ts`: 96 × 64 petak 16 px. Ruangan adalah persegi lantai; dinding tumbuh otomatis di sekelilingnya; pintu adalah celah yang dipotong di dinding dan selalu terbuka. Dinding tidak bisa ditembus dan pintu tidak ditutup. Dinding antara ruang dalam dan luar berupa dinding, pagar rendah atau pagar tanaman.
+- **Penggambar** di `render-map.ts` (lantai marmer/kayu/rumput/dek, dinding bertinggi, air kolam yang berkilau) dan `props.ts` (meja kerja, meja rapat, resepsionis, layar dashboard, sofa, konter, rak, pohon, pohon sakura, palem, lampu, payung, mihrab, dan lainnya). Lampu memakai cahaya tambahan.
+- **Kedalaman nyata:** setiap objek punya kedalaman dari tepi depannya, jadi karakter di belakang meja atau dinding tertutup dengan benar tanpa lapisan potongan gambar.
+- **Tes:** tiap pintu terbuka dan dapat dilalui, dinding dan furnitur memblokir, setiap area saling terjangkau, dan berpindah ruangan selalu lewat pintu.
+- **Batas:** bentuk bangunan lebih sederhana dari gambar referensi (persegi, bukan miring), furnitur masih gaya sederhana, dan sprite karakter belum punya pose duduk atau berenang. Kolam sudah berupa zona air sendiri, jadi berenang dan duduk bisa ditambahkan begitu sprite-nya ada.
+
+## Pembaruan — mengikuti foto referensi
+
+Denah disusun ulang mengikuti `Img/Map`: siluet bertingkat, Garden dan Pool di atas, Main Workspace di tengah, Mushola (dengan ruang kecil di atasnya) dan Break Lounge di kiri, Approval Room dan Command Room di kanan, serta Lobby dengan tangga masuk di bawah. Susunan furnitur mengikuti foto: empat gugus meja dengan pot di tengah, meja rapat di atas, resepsionis dan dinding "204." di Lobby, konsol melengkung di Command Room, sajadah hijau di Mushola, pohon besar dengan paving di Garden. Gaya gambar ditambah garis tepi gelap, bayangan, karpet, dan lebih banyak tanaman. Perbedaan yang tersisa: bangunan berbentuk persegi bertingkat (bukan miring seperti foto), dan detailnya jauh di bawah gambar render aslinya.

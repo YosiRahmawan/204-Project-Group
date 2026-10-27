@@ -3,6 +3,7 @@ import { pages, resolvePage } from './shell/navigation';
 import { PageContent } from './shell/content';
 import { type Member } from './shell/team';
 import { useHealth } from './shell/use-health';
+import { Face } from './shell/faces';
 
 function subscribeToHash(callback: () => void) {
   window.addEventListener('hashchange', callback);
@@ -112,9 +113,7 @@ export function App() {
             </p>
           </div>
           <div className="owner-profile">
-            <span className="avatar owner-avatar" aria-hidden="true">
-              L
-            </span>
+            <Face name="Leo" className="owner-avatar" />
             <div>
               <strong>Leo</strong>
               <span>CEO manusia · Human Owner</span>
@@ -131,10 +130,7 @@ export function App() {
           <div className="topbar-right">
             <span className="environment-tag">LOCAL DEVELOPMENT</span>
             <span className="topbar-owner">
-              Leo{' '}
-              <span className="avatar owner-avatar" aria-hidden="true">
-                L
-              </span>
+              Leo <Face name="Leo" className="owner-avatar" />
             </span>
           </div>
         </header>
@@ -194,12 +190,7 @@ export function App() {
                 Tutup <span aria-hidden="true">×</span>
               </button>
             </div>
-            <span
-              className={`avatar large ${selected.tone}`}
-              aria-hidden="true"
-            >
-              {selected.initials}
-            </span>
+            <Face name={selected.name} className={`large ${selected.tone}`} />
             <h2 id="member-title">{selected.name}</h2>
             <p className="dialog-role">
               {selected.role} / {selected.specialty}

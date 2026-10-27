@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import officeImage from '../../../../Img/Map/Denah Kantor Mewah 204. Project Group.png';
 import { team, type Member } from './team';
+import { Face } from './faces';
 import type { PageId } from './navigation';
 import { Office } from '../office/Office';
 import { ApprovalInbox, TaskBoard } from '../tasks/TaskPages';
@@ -52,9 +53,7 @@ export function TeamList({
           key={member.name}
           onClick={() => onSelect(member)}
         >
-          <span className={`avatar ${member.tone}`} aria-hidden="true">
-            {member.initials}
-          </span>
+          <Face name={member.name} className={member.tone} />
           <span className="member-copy">
             <strong>{member.name}</strong>
             <span>{member.role}</span>
@@ -196,9 +195,7 @@ export function PageContent({
         </p>
         <TeamList full onSelect={onSelect} />
         <div className="owner-note">
-          <span className="avatar owner-avatar" aria-hidden="true">
-            L
-          </span>
+          <Face name="Leo" className="owner-avatar" />
           <div>
             <strong>Leo · CEO manusia</strong>
             <p>

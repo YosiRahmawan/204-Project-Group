@@ -1,6 +1,15 @@
 import { expect, test } from 'vitest';
 import { findPath, toScreen, toGrid, isWalkable, columns, rows } from './model';
-import { rooms, spawn, roomAt } from './layout';
+import {
+  doorCells,
+  doors,
+  floorOf,
+  props,
+  rooms,
+  spawn,
+  roomAt,
+  walls,
+} from './layout';
 import { characters } from './characters';
 
 test('all eight areas have reachable destinations from the entrance', () => {
@@ -39,14 +48,17 @@ test('every area can be reached from every other area', () => {
           findPath(from.destination, to.destination).length,
         ).toBeGreaterThan(0);
 });
-test('furniture, water and walls are blocked; invalid destinations rejected', () => {
-  // Reception desk, pool water and the lobby sign wall, in map pixels.
-  for (const px of [
-    { x: 760, y: 775 },
-    { x: 1200, y: 200 },
-    { x: 760, y: 700 },
-  ])
-    expect(isWalkable(toGrid(px))).toBe(false);
+test('walls, solid furniture and water are blocked; invalid destinations rejected', () => {
+  for (const key of walls.keys()) {
+    const [x, y] = key.split(',').map(Number) as [number, number];
+    expect(isWalkable({ x, y })).toBe(false);
+  }
+  for (const prop of props.filter((q) => !q.flat && !q.onWall))
+    for (let x = prop.x; x < prop.x + prop.w; x++)
+      for (let y = prop.y; y < prop.y + prop.h; y++) {
+        expect(isWalkable({ x, y })).toBe(false);
+        expect(floorOf(x, y)).toBeDefined();
+      }
   for (const cell of [
     { x: -1, y: 1 },
     { x: columns, y: 1 },
@@ -57,6 +69,18 @@ test('furniture, water and walls are blocked; invalid destinations rejected', ()
     expect(findPath(spawn, cell)).toEqual([]);
   expect(findPath(spawn, spawn)).toEqual([]);
   expect(findPath(spawn, rooms[1]!.destination, () => false)).toEqual([]);
+});
+test('every doorway is open on both sides and no wall can be crossed', () => {
+  for (const [x, y, w, h] of doors)
+    for (let i = x; i < x + w; i++)
+      for (let j = y; j < y + h; j++) {
+        expect(walls.has(`${i},${j}`)).toBe(false);
+        expect(isWalkable({ x: i, y: j })).toBe(true);
+      }
+  // Walking between two rooms always passes through a doorway.
+  const path = findPath({ x: 47, y: 52 }, { x: 48, y: 30 });
+  expect(path.length).toBeGreaterThan(0);
+  expect(path.some((cell) => doorCells.has(`${cell.x},${cell.y}`))).toBe(true);
 });
 test('projection is reversible', () => {
   for (let x = 0; x < columns; x++)

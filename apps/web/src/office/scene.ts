@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
-import mapImage from '../../../../assets/runtime/maps/office.png';
 import { characters, spriteInfo, type Character } from './characters';
-import { mapHeight, mapWidth, toGrid, toScreen, type Cell } from './model';
-import { occluders, roomAt, spawn, type Room } from './layout';
+import { toGrid, toScreen, type Cell } from './model';
+import { roomAt, spawn, type Room } from './layout';
+import { renderMap } from './render-map';
 import {
   advance,
   goTo,
@@ -58,7 +58,6 @@ export function mountOffice(
       super('office-map');
     }
     preload() {
-      this.load.image('map', mapImage);
       for (const c of characters) {
         const { frame } = spriteInfo[c.id];
         this.load.spritesheet(c.id, c.url, {
@@ -68,15 +67,7 @@ export function mountOffice(
       }
     }
     create() {
-      this.add.image(0, 0, 'map').setOrigin(0).setDepth(-100);
-      // The same map, cropped around each tall object and sorted by its front edge,
-      // so a character standing behind furniture is drawn under it.
-      for (const [x, y, w, h] of occluders)
-        this.add
-          .image(0, 0, 'map')
-          .setOrigin(0)
-          .setCrop(x, y, w, h)
-          .setDepth(y + h);
+      renderMap(this);
       this.marker = this.add.graphics().setDepth(0.5);
       this.actors = characters.map((c) => this.addActor(c));
       this.loaded = true;
@@ -166,10 +157,9 @@ export function mountOffice(
     fit() {
       if (!this.loaded) return;
       const camera = this.cameras.main;
-      camera.setZoom(
-        Math.min(camera.width / mapWidth, camera.height / mapHeight, 1),
-      );
-      camera.centerOn(mapWidth / 2, mapHeight / 2);
+      // The plan fills about x 90..1510 and y 30..1010 of the 1536 × 1024 grid.
+      camera.setZoom(Math.min(camera.width / 1440, camera.height / 1000, 1.6));
+      camera.centerOn(800, 520);
     }
     go(goal: Cell) {
       if (!this.loaded) return;

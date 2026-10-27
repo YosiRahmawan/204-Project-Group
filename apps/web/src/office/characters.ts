@@ -19,10 +19,10 @@ export type Character = {
 export const characters: Character[] = [
   { id: 'akira', name: 'AKIRA', url: akira, home: { x: 760, y: 856 } },
   { id: 'leo', name: 'LEO', url: leo, home: { x: 1300, y: 770 } },
-  { id: 'aeri', name: 'AERI', url: aeri, home: { x: 600, y: 520 } },
-  { id: 'amy', name: 'AMY', url: amy, home: { x: 650, y: 520 } },
-  { id: 'kuro', name: 'KURO', url: kuro, home: { x: 890, y: 520 } },
-  { id: 'mail', name: 'MAIL', url: mail, home: { x: 940, y: 520 } },
-  { id: 'zegion', name: 'ZEGION', url: zegion, home: { x: 1100, y: 696 } },
+  { id: 'aeri', name: 'AERI', url: aeri, home: { x: 600, y: 472 } },
+  { id: 'amy', name: 'AMY', url: amy, home: { x: 650, y: 472 } },
+  { id: 'kuro', name: 'KURO', url: kuro, home: { x: 890, y: 472 } },
+  { id: 'mail', name: 'MAIL', url: mail, home: { x: 940, y: 472 } },
+  { id: 'zegion', name: 'ZEGION', url: zegion, home: { x: 1048, y: 744 } },
 ];
 export const spriteInfo = manifest;

@@ -1,7 +1,6 @@
 export const team = [
   {
     name: 'Akira',
-    initials: 'AK',
     role: 'General Manager',
     specialty: 'Lead Coordinator',
     description:
@@ -10,7 +9,6 @@ export const team = [
   },
   {
     name: 'Aeri',
-    initials: 'AE',
     role: 'Brand Ambassador',
     specialty: 'Social Media',
     description:
@@ -19,7 +17,6 @@ export const team = [
   },
   {
     name: 'Amy',
-    initials: 'AM',
     role: 'Digital Marketing',
     specialty: 'Marketing Specialist',
     description:
@@ -28,7 +25,6 @@ export const team = [
   },
   {
     name: 'Kuro',
-    initials: 'KU',
     role: 'Art Director',
     specialty: 'Lead Designer',
     description: 'Menjaga arahan visual dan kualitas keluaran desain tim.',
@@ -36,7 +32,6 @@ export const team = [
   },
   {
     name: 'Mail',
-    initials: 'MA',
     role: 'Finance Manager',
     specialty: 'Finance & Budget',
     description:
@@ -45,7 +40,6 @@ export const team = [
   },
   {
     name: 'Zegion',
-    initials: 'ZE',
     role: 'Technology',
     specialty: 'Security & Reliability',
     description: 'Mendukung analisis teknis, keamanan, dan keandalan sistem.',

@@ -61,9 +61,7 @@ export function Office() {
           </h2>
           <p>Delapan area. Satu tempat untuk bertumbuh.</p>
         </div>
-        <span className="badge">
-          8 area terhubung · Akira sebagai karakter uji
-        </span>
+        <span className="badge">8 area terhubung · Akira dapat digerakkan</span>
       </div>
       <div className="office-toolbar" aria-label="Kontrol kamera">
         <div className="office-tool-group">
@@ -181,10 +179,10 @@ export function Office() {
         sekitar meja dan tanaman.
       </p>
       <p className="office-disclosure">
-        Simulasi visual lokal, belum terhubung ke AI. Potongan sprite Akira
-        memakai lembar referensi asli; arah dan animasi produksi masih perlu
-        disempurnakan. Preferensi kurangi gerakan memindahkan karakter langsung
-        ke tujuan.
+        Simulasi visual lokal, belum terhubung ke AI. Peta digambar dari kode
+        dan tetap tajam saat diperbesar; sprite karakter berasal dari lembar
+        referensi asli dan belum punya pose duduk atau berenang. Preferensi
+        kurangi gerakan memindahkan karakter langsung ke tujuan.
       </p>
     </section>
   );
