@@ -24,7 +24,7 @@ Hasil fase terbaru: [laporan UI-001](docs/UI-001_REPORT.md), [screenshot desktop
 
 ## Struktur
 
-- apps/web: shell React/Vite + Tailwind, navigasi, profil tim, status backend; Phaser terpasang belum dijalankan.
+- apps/web: shell React/Vite + Tailwind, navigasi, profil tim, status backend; peta isometrik interaktif (gambar dasar + lapisan SVG).
 - apps/server: Fastify health, validasi config Zod, CORS terbatas.
 - packages/contracts, simulation, agent-adapters: batas modul masa depan, placeholder README.
 - Img: referensi asli yang wajib dipertahankan.

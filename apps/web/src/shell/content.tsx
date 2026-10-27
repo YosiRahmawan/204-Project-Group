@@ -3,7 +3,7 @@ import officeImage from '../../../../Img/Map/Denah Kantor Mewah 204. Project Gro
 import { team, type Member } from './team';
 import { Face } from './faces';
 import type { PageId } from './navigation';
-import { Office } from '../office/Office';
+import { IsoOffice } from '../office/IsoOffice';
 import { ApprovalInbox, TaskBoard } from '../tasks/TaskPages';
 import { Stats } from '../tasks/StatsPanel';
 
@@ -68,17 +68,6 @@ export function TeamList({
     </div>
   );
 }
-
-const areas = [
-  'Lobby',
-  'Main Workspace',
-  'Approval Room',
-  'Command Room',
-  'Mushola',
-  'Break Lounge',
-  'Garden',
-  'Pool Area',
-];
 
 export function PageContent({
   page,
@@ -157,31 +146,7 @@ export function PageContent({
         </section>
       </>
     );
-  if (page === 'office')
-    return (
-      <>
-        <Office />
-        <details className="office-reference-details">
-          <summary>Lihat referensi kantor lengkap</summary>
-          <OfficeReference />
-        </details>
-        <section className="area-section">
-          <h2>Delapan area, satu kantor</h2>
-          <p className="section-note">
-            Seluruh area dapat dijelajahi. Fungsi pekerjaan, approval,
-            monitoring AI, dan jadwal salat belum diaktifkan.
-          </p>
-          <ol className="area-list">
-            {areas.map((area, index) => (
-              <li key={area}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                {area}
-              </li>
-            ))}
-          </ol>
-        </section>
-      </>
-    );
+  if (page === 'office') return <IsoOffice />;
   if (page === 'tasks') return <TaskBoard />;
   if (page === 'approvals') return <ApprovalInbox />;
   if (page === 'team')

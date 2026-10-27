@@ -150,7 +150,7 @@ M0 dokumentasi/setup → M1 shell → M2 satu ruang → M3 satu karakter → M4 
 - Dependencies: OFFICE-002, persetujuan hasil satu karakter untuk perluasan.
 - File/modul: assets/source/maps, assets/runtime, packages/simulation, apps/web.
 - Acceptance criteria: tepat delapan area, workstation owner jelas, akses panel tiap ruang, semua karakter lulus QA; tiada ruang tambahan.
-- Status: PARSIAL; denah asli (Img/Map) menjadi peta delapan area terhubung dengan tujuh karakter. Panel fungsi tiap ruang belum dibuat.
+- Status: PARSIAL; peta isometrik interaktif delapan zona dengan panel detail per zona (spesifikasi, bukan fungsi kerja). Karakter berjalan dihapus sementara; panel fungsi ruangan belum dibuat.
 - Risiko: biaya authoring enam karakter dan performa scene.
 
 ## M6–M7 — Workflow simulasi dan aktivitas (belum diizinkan)

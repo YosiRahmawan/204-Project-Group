@@ -63,3 +63,15 @@ Peta foto diganti dengan peta yang digambar dari kode (Phaser Graphics, vektor),
 ## Pembaruan — mengikuti foto referensi
 
 Denah disusun ulang mengikuti `Img/Map`: siluet bertingkat, Garden dan Pool di atas, Main Workspace di tengah, Mushola (dengan ruang kecil di atasnya) dan Break Lounge di kiri, Approval Room dan Command Room di kanan, serta Lobby dengan tangga masuk di bawah. Susunan furnitur mengikuti foto: empat gugus meja dengan pot di tengah, meja rapat di atas, resepsionis dan dinding "204." di Lobby, konsol melengkung di Command Room, sajadah hijau di Mushola, pohon besar dengan paving di Garden. Gaya gambar ditambah garis tepi gelap, bayangan, karpet, dan lebih banyak tanaman. Perbedaan yang tersisa: bangunan berbentuk persegi bertingkat (bukan miring seperti foto), dan detailnya jauh di bawah gambar render aslinya.
+
+## Pembaruan — peta isometrik interaktif (dari kode yang Anda kirim)
+
+Halaman Kantor virtual kini memakai peta dari kode HTML yang Anda kirim, dipindahkan ke React: `apps/web/src/office/IsoOffice.tsx` (tampilan), `zones.ts` (data delapan zona dan koordinatnya), `splash.ts` (percikan air di kanvas), dan `iso-office.css`. Gambar dasarnya `assets/runtime/maps/office-iso.jpg` (1376 × 768, diunduh sekali dari alamat Google di kode itu, 258 KB). Isinya: sorotan zona saat di-hover, pin, tooltip, panel detail di kanan (Esc menutup, panah kiri/kanan berpindah zona, tombol Previous/Next), pilihan zona, kilau air kolam, gelembung jacuzzi, bebek, ayunan pohon, lampu taman, papan "204." di Lobby, dan percikan saat kolam diklik.
+
+Penyesuaian dari kode asli: animasi CSS menimpa atribut `transform` SVG sehingga bebek dan cahaya pohon muncul di pojok kiri-atas peta; posisinya kini ditanam di koordinat. Zona dapat dipakai dengan keyboard (Tab, Enter) dan panel detail tidak bisa difokus saat tertutup. Font Google (Plus Jakarta Sans, JetBrains Mono) tidak dimuat; aplikasi memakai font bawaannya.
+
+Dihapus: peta Phaser dan karakter berjalan (kode peta vektor, jalur, penghalang, dan tes-nya ada di riwayat git), serta dependensi `phaser`. Atlas karakter di `assets/runtime/characters` dan `scripts/build-sprites.mjs` tetap ada untuk dipakai lagi. Karakter berjalan perlu jalur dan penghalang yang dikalibrasi ulang ke gambar baru.
+
+## Pembaruan — detail di bawah peta, tulisan menempel di dinding
+
+Bar alat di atas peta dan bar petunjuk di bawahnya dihapus. Memilih zona (klik di peta atau tombol di bawah peta) membuat peta zoom ke zona itu dan detailnya tampil tepat di bawah peta, bukan di panel samping; Esc atau "Lihat seluruh kantor" kembali ke tampilan penuh. Tulisan "204. PROJECT GROUP" di Lobby kini digambar langsung di panel marmer dinding (serif Playfair Display, dibundel lewat `@fontsource/playfair-display`) tanpa papan hitam yang tampak menempel.
