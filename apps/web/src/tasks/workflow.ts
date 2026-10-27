@@ -1,4 +1,6 @@
 // Simulated task workflow: deterministic, in memory, no backend and no AI.
+import type { Attachment } from './attachments';
+
 export const agents = ['Aeri', 'Amy', 'Kuro', 'Mail', 'Zegion'] as const;
 export type Agent = (typeof agents)[number];
 export type Status =
@@ -19,6 +21,7 @@ export type Task = {
   // Bumps every time the owner submits a result; approvals refer to one version.
   version: number;
   revisionReason: string | null;
+  attachments: Attachment[];
   history: { at: number; text: string }[];
 };
 export type Result = { ok: true; task: Task } | { ok: false; error: string };
@@ -38,17 +41,27 @@ export function createTask(
   instruction: string,
   sequence: number,
   now: number,
+  attachments: Attachment[] = [],
 ): Result {
   const text = instruction.trim();
-  if (!text) return fail('Instruksi tidak boleh kosong.');
+  if (!text && attachments.length === 0)
+    return fail('Tulis instruksi atau lampirkan minimal satu file.');
   return ok({
     id: `T-${String(sequence).padStart(3, '0')}`,
-    instruction: text,
+    instruction: text || '(hanya lampiran)',
     status: 'dikirim',
     owner: null,
     version: 0,
     revisionReason: null,
-    history: [{ at: now, text: 'Leo mengirim instruksi (simulasi).' }],
+    attachments,
+    history: [
+      {
+        at: now,
+        text: attachments.length
+          ? `Leo mengirim instruksi dengan ${attachments.length} lampiran (simulasi).`
+          : 'Leo mengirim instruksi (simulasi).',
+      },
+    ],
   });
 }
 

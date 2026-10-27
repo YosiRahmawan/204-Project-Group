@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from 'react';
+import { demoTasks } from './demo';
+import type { Attachment } from './attachments';
 import {
   advance,
   createTask,
@@ -30,11 +32,23 @@ function update(id: string, change: (task: Task) => Result) {
 
 // Each action returns an error message, or null on success.
 export const actions = {
-  create(instruction: string): string | null {
-    const result = createTask(instruction, tasks.length + 1, Date.now());
+  create(instruction: string, attachments: Attachment[] = []): string | null {
+    const result = createTask(
+      instruction,
+      tasks.length + 1,
+      Date.now(),
+      attachments,
+    );
     if (!result.ok) return result.error;
     publish([...tasks, result.task]);
     return null;
+  },
+  // Sample data and a reset, so the statistics can be tried out and cleared again.
+  seed() {
+    publish([...tasks, ...demoTasks(Date.now(), tasks.length + 1)]);
+  },
+  clear() {
+    publish([]);
   },
   advance(id: string): string | null {
     return update(id, (task) => advance(task, tasks.length, Date.now()));

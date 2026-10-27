@@ -1,5 +1,12 @@
 import { useState } from 'react';
 import { actions, useTasks } from './store';
+import {
+  accept,
+  checkFiles,
+  formatSize,
+  maxFiles,
+  type Attachment,
+} from './attachments';
 import type { Decision, Status, Task } from './workflow';
 
 const statusLabel: Record<Status, string> = {
@@ -51,9 +58,127 @@ function StepButton({ id }: { id: string }) {
   );
 }
 
+function AttachmentList({
+  items,
+  onRemove,
+}: {
+  items: Attachment[];
+  onRemove?: (index: number) => void;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <ul className="attachment-list">
+      {items.map((item, index) => (
+        <li key={`${item.name}-${index}`} className="attachment">
+          {item.previewUrl ? (
+            <a
+              href={item.previewUrl}
+              target="_blank"
+              rel="noreferrer"
+              title={`Buka ${item.name}`}
+            >
+              <img src={item.previewUrl} alt={`Pratinjau ${item.name}`} />
+            </a>
+          ) : (
+            <span className="attachment-icon" aria-hidden="true">
+              {item.type.split('/')[1]?.slice(0, 4).toUpperCase() ?? 'FILE'}
+            </span>
+          )}
+          <span className="attachment-name">
+            {item.name}
+            <small>{formatSize(item.size)}</small>
+          </span>
+          {onRemove && (
+            <button
+              type="button"
+              className="attachment-remove"
+              aria-label={`Hapus ${item.name}`}
+              onClick={() => onRemove(index)}
+            >
+              ×
+            </button>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AttachmentPicker({
+  items,
+  setItems,
+  setProblem,
+}: {
+  items: Attachment[];
+  setItems: (next: Attachment[]) => void;
+  setProblem: (message: string | null) => void;
+}) {
+  const [dragging, setDragging] = useState(false);
+  const add = (list: FileList | null) => {
+    const files = [...(list ?? [])];
+    const { accepted, errors } = checkFiles(items.length, files);
+    setProblem(errors.length ? errors.join(' ') : null);
+    const added = accepted.map((index): Attachment => {
+      const file = files[index]!;
+      return {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        previewUrl: file.type.startsWith('image/')
+          ? URL.createObjectURL(file)
+          : null,
+      };
+    });
+    setItems([...items, ...added]);
+  };
+  return (
+    <div
+      className={dragging ? 'dropzone dragging' : 'dropzone'}
+      onDragOver={(event) => {
+        event.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(event) => {
+        event.preventDefault();
+        setDragging(false);
+        add(event.dataTransfer.files);
+      }}
+    >
+      <label className="button" htmlFor="attachments">
+        Lampirkan foto, dokumen, atau media
+      </label>
+      <input
+        id="attachments"
+        className="visually-hidden"
+        type="file"
+        multiple
+        accept={accept}
+        onChange={(event) => {
+          add(event.target.files);
+          event.target.value = '';
+        }}
+      />
+      <span className="subtle-label">
+        atau seret file ke sini · maks {maxFiles} file, 10 MB per file · hanya
+        disimpan di browser ini
+      </span>
+      <AttachmentList
+        items={items}
+        onRemove={(index) => {
+          const removed = items[index];
+          if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+          setItems(items.filter((_, i) => i !== index));
+        }}
+      />
+    </div>
+  );
+}
+
 export function TaskBoard() {
   const tasks = useTasks();
   const [text, setText] = useState('');
+  const [files, setFiles] = useState<Attachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   return (
     <section className="task-page">
@@ -69,9 +194,12 @@ export function TaskBoard() {
         className="task-form"
         onSubmit={(event) => {
           event.preventDefault();
-          const problem = actions.create(text);
+          const problem = actions.create(text, files);
           setError(problem);
-          if (!problem) setText('');
+          if (!problem) {
+            setText('');
+            setFiles([]);
+          }
         }}
       >
         <label htmlFor="instruction">Instruksi untuk Akira</label>
@@ -81,6 +209,11 @@ export function TaskBoard() {
           rows={3}
           onChange={(event) => setText(event.target.value)}
           placeholder="Contoh: Buat konten Instagram untuk peluncuran produk"
+        />
+        <AttachmentPicker
+          items={files}
+          setItems={setFiles}
+          setProblem={setError}
         />
         <button className="button button-dark" type="submit">
           Kirim instruksi (simulasi)
@@ -100,6 +233,7 @@ export function TaskBoard() {
                 <span className="badge">{statusLabel[task.status]}</span>
               </div>
               <p>{task.instruction}</p>
+              <AttachmentList items={task.attachments} />
               <p className="subtle-label">
                 Pemilik: {task.owner ?? 'belum dibagikan'}
                 {task.version > 0 && ` · hasil v${task.version}`}
@@ -182,6 +316,7 @@ export function ApprovalInbox() {
                 </span>
               </div>
               <p>{task.instruction}</p>
+              <AttachmentList items={task.attachments} />
               <Decide task={task} />
               <History task={task} />
             </li>
@@ -199,6 +334,7 @@ export function ApprovalInbox() {
                   <span className="badge">{statusLabel[task.status]}</span>
                 </div>
                 <p>{task.instruction}</p>
+                <AttachmentList items={task.attachments} />
                 <History task={task} />
               </li>
             ))}

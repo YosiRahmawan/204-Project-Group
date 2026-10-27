@@ -4,10 +4,21 @@ import { PageContent } from './shell/content';
 import { type Member } from './shell/team';
 import { useHealth } from './shell/use-health';
 import { Face } from './shell/faces';
+import { Icon } from './shell/icons';
 
 function subscribeToHash(callback: () => void) {
   window.addEventListener('hashchange', callback);
   return () => window.removeEventListener('hashchange', callback);
+}
+
+const collapsedKey = 'sidebar-collapsed';
+// The choice is a convenience only; storage can be blocked, so every access is guarded.
+function readCollapsed() {
+  try {
+    return localStorage.getItem(collapsedKey) === '1';
+  } catch {
+    return false;
+  }
 }
 
 export function App() {
@@ -19,6 +30,16 @@ export function App() {
   const page = resolvePage(hash);
   const { status, retry } = useHealth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem(collapsedKey, next ? '1' : '0');
+    } catch {
+      // Keeps working for this visit without remembering the choice.
+    }
+  };
   const [selected, setSelected] = useState<Member | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -46,7 +67,7 @@ export function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className={collapsed ? 'app-shell collapsed' : 'app-shell'}>
       <a
         className="skip-link"
         href="#main-content"
@@ -68,6 +89,15 @@ export function App() {
           </span>
           <span className="brand-name">PROJECT GROUP</span>
         </a>
+        <button
+          className="collapse-toggle"
+          aria-pressed={collapsed}
+          aria-label={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'}
+          title={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'}
+          onClick={toggleCollapsed}
+        >
+          <Icon id={collapsed ? 'expand' : 'collapse'} />
+        </button>
         <div className="workspace-label">
           VIRTUAL HEADQUARTERS <span>01</span>
         </div>
@@ -85,17 +115,16 @@ export function App() {
           className={menuOpen ? 'navigation open' : 'navigation'}
           aria-label="Navigasi utama"
         >
-          {pages.map((item, index) => (
+          {pages.map((item) => (
             <a
               key={item.id}
               href={`#/${item.id}`}
               aria-current={item.id === page.id ? 'page' : undefined}
+              title={item.label}
               onClick={() => setMenuOpen(false)}
             >
-              <span className="nav-index" aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              {item.label}
+              <Icon id={item.id} />
+              <span className="nav-label">{item.label}</span>
               <span className="nav-indicator" aria-hidden="true">
                 →
               </span>

@@ -26,6 +26,8 @@ test('instruction goes through Akira and the owner to the CEO', () => {
 
 test('rejects empty instructions and steps that do not exist', () => {
   expect(createTask('   ', 1, 0).ok).toBe(false);
+  const file = { name: 'a.png', size: 1, type: 'image/png', previewUrl: null };
+  expect(createTask('', 1, 0, [file]).ok).toBe(true);
   expect(advance(step(make(), 4), 1, 0).ok).toBe(false);
 });
 

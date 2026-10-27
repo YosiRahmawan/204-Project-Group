@@ -163,7 +163,7 @@ M0 dokumentasi/setup → M1 shell → M2 satu ruang → M3 satu karakter → M4 
 - Dependencies: OFFICE-003, UI-001.
 - File/modul: packages/contracts, apps/web, tests/.
 - Acceptance criteria: instruksi→Akira→owner→review; transisi ilegal ditolak; label Simulasi; progres tidak berasal dari animasi.
-- Status: SIMULASI SELESAI (apps/web/src/tasks); instruksi→Akira→owner→review→Leo, transisi ilegal ditolak, berlabel Simulasi, data di memori. Belum terhubung ke avatar di peta, backend, atau AI.
+- Status: SIMULASI SELESAI (apps/web/src/tasks); instruksi→Akira→owner→review→Leo, transisi ilegal ditolak, berlabel Simulasi, data di memori. Instruksi dapat membawa lampiran foto, dokumen, dan media (disimpan hanya di tab browser). Ringkasan menampilkan statistik dan grafik dari task simulasi. Belum terhubung ke avatar di peta, backend, atau AI.
 - Risiko: fake state bocor sebagai klaim backend/AI aktif.
 
 ### APPROVAL-001 — Approval/revisi simulasi

@@ -5,6 +5,7 @@ import { Face } from './faces';
 import type { PageId } from './navigation';
 import { Office } from '../office/Office';
 import { ApprovalInbox, TaskBoard } from '../tasks/TaskPages';
+import { Stats } from '../tasks/StatsPanel';
 
 export function OfficeReference() {
   const [failed, setFailed] = useState(false);
@@ -125,6 +126,7 @@ export function PageContent({
             <strong className="summary-text">Belum tersedia</strong>
           </div>
         </div>
+        <Stats />
         <div className="overview-grid">
           <OfficeReference />
           <section className="team-section">
