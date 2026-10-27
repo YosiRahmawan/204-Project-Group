@@ -64,3 +64,16 @@ test('only a task waiting for approval can be rejected', () => {
   const rejected = decide(step(make(), 4), 'reject', 1, '', 2);
   expect(rejected.ok && rejected.task.status).toBe('ditolak');
 });
+
+test('history marks sent-back and rejected work as warnings and approvals as done', () => {
+  const waiting = step(make(), 4);
+  const revised = decide(waiting, 'revise', 1, 'Ubah', 1);
+  const approved = decide(waiting, 'approve', 1, '', 1);
+  const rejected = decide(waiting, 'reject', 1, '', 1);
+  const kind = (r: ReturnType<typeof decide>) =>
+    r.ok && r.task.history.at(-1)?.kind;
+  expect(kind(revised)).toBe('warn');
+  expect(kind(approved)).toBe('done');
+  expect(kind(rejected)).toBe('warn');
+  expect(waiting.history.at(-1)?.kind).toBe('info');
+});

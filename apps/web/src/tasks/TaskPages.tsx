@@ -19,6 +19,14 @@ const statusLabel: Record<Status, string> = {
   selesai: 'Selesai',
   ditolak: 'Ditolak',
 };
+// Board columns, left to right; one column can hold more than one status.
+const columns: { id: string; title: string; statuses: Status[] }[] = [
+  { id: 'masuk', title: 'Masuk', statuses: ['dikirim'] },
+  { id: 'analisis', title: 'Dianalisis', statuses: ['analisis'] },
+  { id: 'kerja', title: 'Dikerjakan', statuses: ['dikerjakan', 'revisi'] },
+  { id: 'review', title: 'Review', statuses: ['review', 'menunggu-approval'] },
+  { id: 'selesai', title: 'Selesai', statuses: ['selesai', 'ditolak'] },
+];
 const finished = (task: Task) =>
   task.status === 'selesai' || task.status === 'ditolak';
 
@@ -51,7 +59,7 @@ function StepButton({ id }: { id: string }) {
   return (
     <>
       <button className="button" onClick={() => setError(actions.advance(id))}>
-        Jalankan langkah berikutnya (simulasi)
+        Langkah berikutnya (simulasi)
       </button>
       <Message text={error} />
     </>
@@ -225,32 +233,59 @@ export function TaskBoard() {
           Belum ada task. Kirim instruksi pertama untuk melihat alurnya.
         </p>
       ) : (
-        <ul className="task-list">
-          {tasks.map((task) => (
-            <li className="task-card" key={task.id}>
-              <div className="task-top">
-                <strong>{task.id}</strong>
-                <span className="badge">{statusLabel[task.status]}</span>
-              </div>
-              <p>{task.instruction}</p>
-              <AttachmentList items={task.attachments} />
-              <p className="subtle-label">
-                Pemilik: {task.owner ?? 'belum dibagikan'}
-                {task.version > 0 && ` · hasil v${task.version}`}
-                {task.status === 'revisi' &&
-                  ` · revisi: ${task.revisionReason}`}
-              </p>
-              {task.status === 'menunggu-approval' ? (
-                <a className="text-link" href="#/approvals">
-                  Putuskan di Approval inbox →
-                </a>
-              ) : (
-                !finished(task) && <StepButton id={task.id} />
-              )}
-              <History task={task} />
-            </li>
-          ))}
-        </ul>
+        <div className="kanban" role="list" aria-label="Papan task">
+          {columns.map((column) => {
+            const inColumn = tasks.filter((task) =>
+              column.statuses.includes(task.status),
+            );
+            return (
+              <section
+                key={column.id}
+                className="kanban-column"
+                role="listitem"
+                aria-label={`${column.title}, ${inColumn.length} task`}
+              >
+                <h3>
+                  {column.title} <span>{inColumn.length}</span>
+                </h3>
+                {inColumn.length === 0 ? (
+                  <p className="panel-empty">Kosong</p>
+                ) : (
+                  <ul className="kanban-cards">
+                    {inColumn.map((task) => (
+                      <li className="kanban-card" key={task.id}>
+                        <div className="task-top">
+                          <strong>{task.id}</strong>
+                          {column.statuses.length > 1 && (
+                            <span className="badge">
+                              {statusLabel[task.status]}
+                            </span>
+                          )}
+                        </div>
+                        <p className="kanban-title">{task.instruction}</p>
+                        <AttachmentList items={task.attachments} />
+                        <p className="subtle-label">
+                          {task.owner ?? 'Belum dibagikan'}
+                          {task.version > 0 && ` · v${task.version}`}
+                          {task.status === 'revisi' &&
+                            ` · ${task.revisionReason}`}
+                        </p>
+                        {task.status === 'menunggu-approval' ? (
+                          <a className="text-link" href="#/approvals">
+                            Putuskan →
+                          </a>
+                        ) : (
+                          !finished(task) && <StepButton id={task.id} />
+                        )}
+                        <History task={task} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            );
+          })}
+        </div>
       )}
     </section>
   );

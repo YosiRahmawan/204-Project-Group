@@ -12,6 +12,8 @@ export type Status =
   | 'revisi'
   | 'selesai'
   | 'ditolak';
+// info = normal step, warn = sent back or rejected, done = approved.
+export type HistoryKind = 'info' | 'warn' | 'done';
 export type Decision = 'approve' | 'revise' | 'reject';
 export type Task = {
   id: string;
@@ -22,7 +24,7 @@ export type Task = {
   version: number;
   revisionReason: string | null;
   attachments: Attachment[];
-  history: { at: number; text: string }[];
+  history: { at: number; text: string; kind: HistoryKind }[];
 };
 export type Result = { ok: true; task: Task } | { ok: false; error: string };
 
@@ -57,6 +59,7 @@ export function createTask(
     history: [
       {
         at: now,
+        kind: 'info',
         text: attachments.length
           ? `Leo mengirim instruksi dengan ${attachments.length} lampiran (simulasi).`
           : 'Leo mengirim instruksi (simulasi).',
@@ -70,11 +73,12 @@ const log = (
   now: number,
   text: string,
   patch: Partial<Task>,
+  kind: HistoryKind = 'info',
 ): Result =>
   ok({
     ...task,
     ...patch,
-    history: [...task.history, { at: now, text }],
+    history: [...task.history, { at: now, text, kind }],
   });
 
 // One simulated step by Akira or the owner. Only the CEO can decide an approval.
@@ -137,13 +141,20 @@ export function decide(
   if (decision === 'revise') {
     const why = reason.trim();
     if (!why) return fail('Alasan revisi wajib diisi.');
-    return log(task, now, `Leo meminta revisi v${version}: ${why}`, {
-      status: 'revisi',
-      revisionReason: why,
-    });
+    return log(
+      task,
+      now,
+      `Leo meminta revisi v${version}: ${why}`,
+      { status: 'revisi', revisionReason: why },
+      'warn',
+    );
   }
   const text = decision === 'approve' ? 'Leo menyetujui' : 'Leo menolak';
-  return log(task, now, `${text} hasil v${version}.`, {
-    status: decided[decision],
-  });
+  return log(
+    task,
+    now,
+    `${text} hasil v${version}.`,
+    { status: decided[decision] },
+    decision === 'approve' ? 'done' : 'warn',
+  );
 }

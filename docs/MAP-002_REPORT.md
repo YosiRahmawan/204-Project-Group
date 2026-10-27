@@ -75,3 +75,7 @@ Dihapus: peta Phaser dan karakter berjalan (kode peta vektor, jalur, penghalang,
 ## Pembaruan — detail di bawah peta, tulisan menempel di dinding
 
 Bar alat di atas peta dan bar petunjuk di bawahnya dihapus. Memilih zona (klik di peta atau tombol di bawah peta) membuat peta zoom ke zona itu dan detailnya tampil tepat di bawah peta, bukan di panel samping; Esc atau "Lihat seluruh kantor" kembali ke tampilan penuh. Tulisan "204. PROJECT GROUP" di Lobby kini digambar langsung di panel marmer dinding (serif Playfair Display, dibundel lewat `@fontsource/playfair-display`) tanpa papan hitam yang tampak menempel.
+
+## Pembaruan — peta lebih bersih, Leo di Command Room
+
+Panel detail zona, titik pin, dan lapisan sorotan hijau dihapus; zona kini hanya tombol dan area klik tak terlihat. Memilih zona (di peta atau tombol) membuat peta zoom ke zona itu, dan memilihnya sekali lagi atau menekan Esc kembali ke tampilan penuh. Area zona kini persegi yang disetel ke isi gambar, sehingga zoom tepat di ruangannya. Saat di-zoom, gambar memakai `image-rendering: pixelated` agar tepi piksel tetap tegas, bukan kabur; gambar sumber hanya 1376 × 768, jadi ketajaman penuh butuh gambar beresolusi lebih besar. Halaman Ringkasan memakai peta yang sama (bukan lagi gambar referensi berlabel) dan menautkannya ke peta interaktif. Leo berdiri di Command Room (sprite dari `assets/runtime/characters/leo.png`) dan bernapas pelan; belum berjalan.

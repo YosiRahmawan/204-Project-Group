@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { actions, useTasks } from './store';
-import { summarize } from './stats';
+import { ago, needsLeo, recentActivity, summarize } from './stats';
 import { agents, type Status } from './workflow';
+import { team } from '../shell/team';
 
 const statusLabel: Record<Status, string> = {
   dikirim: 'Instruksi dikirim',
@@ -129,19 +131,86 @@ function Donut({
 export function Stats() {
   const tasks = useTasks();
   const s = summarize(tasks);
+  // Relative times refresh every 30 seconds.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const feed = recentActivity(tasks, 5);
+  const waiting = needsLeo(tasks).slice(0, 5);
   return (
     <section className="stats" aria-labelledby="stats-title">
       <div className="section-heading">
-        <h2 id="stats-title">Statistik task</h2>
+        <h2 id="stats-title">Aktivitas &amp; statistik</h2>
         <span className="badge">Simulasi · tanpa AI</span>
       </div>
       <p className="section-note">
         Dihitung dari task di Task board pada browser ini. Belum ada data nyata
         dari backend atau AI.
       </p>
+      <dl className="kpis">
+        <div>
+          <dt>Agent (direncanakan)</dt>
+          <dd>{team.length}</dd>
+        </div>
+        <div>
+          <dt>Task aktif</dt>
+          <dd>{s.active}</dd>
+        </div>
+        <div>
+          <dt>Selesai</dt>
+          <dd>{s.approved}</dd>
+        </div>
+        <div>
+          <dt>Menunggu approval</dt>
+          <dd>{s.byStatus['menunggu-approval']}</dd>
+        </div>
+      </dl>
+      <div className="dash-panels">
+        <section className="panel" aria-labelledby="feed-title">
+          <h3 id="feed-title">Aktivitas terbaru</h3>
+          {feed.length === 0 ? (
+            <p className="panel-empty">Belum ada aktivitas.</p>
+          ) : (
+            <ul className="feed">
+              {feed.map((item, index) => (
+                <li key={`${item.taskId}-${item.at}-${index}`}>
+                  <span className={`dot ${item.kind}`} aria-hidden="true" />
+                  <span className="feed-text">
+                    <strong>{item.taskId}</strong> {item.text}
+                  </span>
+                  <span className="feed-time">{ago(now, item.at)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        <section className="panel" aria-labelledby="wait-title">
+          <h3 id="wait-title">Menunggu keputusan Leo</h3>
+          {waiting.length === 0 ? (
+            <p className="panel-empty">
+              Tidak ada hasil yang menunggu approval.
+            </p>
+          ) : (
+            <ul className="feed">
+              {waiting.map((task) => (
+                <li key={task.id}>
+                  <span className="feed-text">
+                    <strong>{task.id}</strong> {task.instruction}
+                  </span>
+                  <a className="feed-time" href="#/approvals">
+                    Putuskan
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
       {s.total === 0 ? (
         <div className="stats-empty" role="status">
-          <p>Belum ada task, jadi belum ada yang bisa dihitung.</p>
+          <p>Belum ada task, jadi grafik belum bisa dihitung.</p>
           <div className="task-actions">
             <button
               className="button button-dark"
@@ -156,36 +225,6 @@ export function Stats() {
         </div>
       ) : (
         <>
-          <dl className="kpis">
-            <div>
-              <dt>Total task</dt>
-              <dd>{s.total}</dd>
-            </div>
-            <div>
-              <dt>Sedang berjalan</dt>
-              <dd>{s.active}</dd>
-            </div>
-            <div>
-              <dt>Menunggu approval</dt>
-              <dd>{s.byStatus['menunggu-approval']}</dd>
-            </div>
-            <div>
-              <dt>Tingkat persetujuan</dt>
-              <dd>
-                {s.approvalRate === null
-                  ? '–'
-                  : `${Math.round(s.approvalRate * 100)}%`}
-              </dd>
-            </div>
-            <div>
-              <dt>Revisi diminta</dt>
-              <dd>{s.revisions}</dd>
-            </div>
-            <div>
-              <dt>Lampiran</dt>
-              <dd>{s.attachments}</dd>
-            </div>
-          </dl>
           <div className="chart-grid">
             <Bars
               title="Task per tahap"
@@ -214,6 +253,13 @@ export function Stats() {
               ]}
             />
           </div>
+          <p className="section-note">
+            Tingkat persetujuan{' '}
+            {s.approvalRate === null
+              ? '–'
+              : `${Math.round(s.approvalRate * 100)}%`}{' '}
+            · revisi diminta {s.revisions} · lampiran {s.attachments}
+          </p>
           <div className="task-actions">
             <button className="button" onClick={() => actions.seed()}>
               Tambah data contoh

@@ -5,6 +5,7 @@ import { type Member } from './shell/team';
 import { useHealth } from './shell/use-health';
 import { Face } from './shell/faces';
 import { Icon } from './shell/icons';
+import { useTasks } from './tasks/store';
 
 function subscribeToHash(callback: () => void) {
   window.addEventListener('hashchange', callback);
@@ -29,6 +30,7 @@ export function App() {
   );
   const page = resolvePage(hash);
   const { status, retry } = useHealth();
+  const tasks = useTasks();
   const [menuOpen, setMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const toggleCollapsed = () => {
@@ -209,9 +211,13 @@ export function App() {
         className="member-dialog"
         aria-labelledby="member-title"
         onClose={() => setSelected(null)}
+        // Only the dark backdrop is the dialog element itself; the panel is inside .dialog-body.
+        onClick={(event) => {
+          if (event.target === event.currentTarget) dialog.current?.close();
+        }}
       >
         {selected && (
-          <>
+          <div className="dialog-body">
             <div className="dialog-top">
               <span className="eyebrow">PROFIL TIM</span>
               <button
@@ -234,22 +240,29 @@ export function App() {
               </div>
               <div>
                 <dt>Task aktif</dt>
-                <dd>Belum tersedia</dd>
+                <dd>
+                  {
+                    tasks.filter(
+                      (task) =>
+                        task.status !== 'selesai' &&
+                        task.status !== 'ditolak' &&
+                        (selected.name === 'Akira' ||
+                          task.owner === selected.name),
+                    ).length
+                  }{' '}
+                  (simulasi)
+                </dd>
               </div>
               <div>
-                <dt>Aktivitas visual</dt>
-                <dd>
-                  {selected.name === 'Akira'
-                    ? 'Pratinjau gerak antar-area kantor'
-                    : 'Berdiri di kantor (belum bergerak)'}
-                </dd>
+                <dt>Di peta kantor</dt>
+                <dd>Belum tampil</dd>
               </div>
             </dl>
             <div className="dialog-note">
               Profil ini mendeskripsikan peran yang direncanakan. Tidak ada
               proses AI yang dijalankan.
             </div>
-          </>
+          </div>
         )}
       </dialog>
     </div>

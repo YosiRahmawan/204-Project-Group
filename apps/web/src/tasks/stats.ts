@@ -1,4 +1,10 @@
-import { agents, type Agent, type Status, type Task } from './workflow';
+import {
+  agents,
+  type Agent,
+  type HistoryKind,
+  type Status,
+  type Task,
+} from './workflow';
 
 export type Summary = {
   total: number;
@@ -56,4 +62,42 @@ export function summarize(tasks: Task[]): Summary {
     attachments,
     approvalRate: decided ? approved / decided : null,
   };
+}
+
+export type Activity = {
+  taskId: string;
+  title: string;
+  text: string;
+  at: number;
+  kind: HistoryKind;
+};
+
+// Newest events across all tasks, for the activity feed.
+export function recentActivity(tasks: Task[], limit: number): Activity[] {
+  return tasks
+    .flatMap((task) =>
+      task.history.map((h) => ({
+        taskId: task.id,
+        title: task.instruction,
+        text: h.text,
+        at: h.at,
+        kind: h.kind,
+      })),
+    )
+    .sort((a, b) => b.at - a.at)
+    .slice(0, limit);
+}
+
+// Tasks that wait for Leo: results to decide on, and revisions he asked for.
+export function needsLeo(tasks: Task[]): Task[] {
+  return tasks.filter((t) => t.status === 'menunggu-approval');
+}
+
+// Short relative time such as "baru saja", "5m", "3j", "2h".
+export function ago(now: number, at: number): string {
+  const minutes = Math.max(0, Math.floor((now - at) / 60_000));
+  if (minutes < 1) return 'baru saja';
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  return hours < 24 ? `${hours}j` : `${Math.floor(hours / 24)}h`;
 }

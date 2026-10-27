@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import '@fontsource/playfair-display/500.css';
 import mapUrl from '../../../../assets/runtime/maps/office-iso.jpg';
+import leoAtlas from '../../../../assets/runtime/characters/leo.png';
+import sprites from '../../../../assets/runtime/characters/manifest.json';
 import { zones, type Zone } from './zones';
 import { createSplash } from './splash';
 import './iso-office.css';
+
+// Leo, the CEO, stands in the Command Room. His feet are at (leoX, leoY) in map pixels.
+const leo = sprites.leo;
+const leoX = 1062;
+const leoY = 606;
+const leoHeight = 52;
+const leoWidth = (leo.frame.width / leo.frame.height) * leoHeight;
 
 const mapWidth = 1376;
 const mapHeight = 768;
@@ -40,6 +49,8 @@ export function IsoOffice() {
 
   const active = zones.find((z) => z.id === activeId) ?? null;
   const hover = zones.find((z) => z.id === hoverId) ?? null;
+  // Choosing the zone that is already framed goes back to the whole office.
+  const toggle = (id: string) => setActiveId(activeId === id ? null : id);
   const step = (offset: number) => {
     const index = zones.findIndex((z) => z.id === activeId);
     const from = index === -1 ? (offset > 0 ? -1 : 0) : index;
@@ -96,7 +107,7 @@ export function IsoOffice() {
   const polygon = (zone: Zone) => ({
     key: zone.id,
     id: `poly-${zone.id}`,
-    className: zone.id === activeId ? 'room-poly active' : 'room-poly',
+    className: 'room-poly',
     points: zone.points,
     role: 'button' as const,
     tabIndex: 0,
@@ -133,7 +144,7 @@ export function IsoOffice() {
         >
           <img
             alt="Isometric pixel art floor plan of 204 Project Group: garden, pool, workspace, lobby, lounge, prayer room, approval room and command room"
-            className="w-full h-full object-contain pointer-events-none"
+            className={`w-full h-full object-contain pointer-events-none ${active ? 'map-zoomed' : ''}`}
             src={mapUrl}
             width="1376"
             height="768"
@@ -202,6 +213,32 @@ export function IsoOffice() {
               >
                 PROJECT GROUP
               </text>
+            </g>
+
+            <g aria-hidden="true">
+              <ellipse
+                cx={leoX}
+                cy={leoY - 1}
+                rx={leoWidth * 0.42}
+                ry="3.5"
+                fill="#3b2c22"
+                opacity="0.22"
+              />
+              <g className="leo-idle">
+                <svg
+                  x={leoX - leoWidth / 2}
+                  y={leoY - leoHeight}
+                  width={leoWidth}
+                  height={leoHeight}
+                  viewBox={`0 0 ${leo.frame.width} ${leo.frame.height}`}
+                >
+                  <image
+                    href={leoAtlas}
+                    width={leo.frame.width * leo.columns}
+                    height={leo.frame.height * 3}
+                  />
+                </svg>
+              </g>
             </g>
 
             <g>
@@ -414,9 +451,7 @@ export function IsoOffice() {
             {zones.map((zone) => (
               <polygon
                 {...polygon(zone)}
-                onClick={
-                  zone.id === 'pool' ? poolClick : () => setActiveId(zone.id)
-                }
+                onClick={zone.id === 'pool' ? poolClick : () => toggle(zone.id)}
                 onKeyDown={(event) => {
                   if (event.key !== 'Enter' && event.key !== ' ') return;
                   event.preventDefault();
@@ -426,23 +461,10 @@ export function IsoOffice() {
                       clientX: box.left + box.width / 2,
                       clientY: box.top + box.height / 2,
                     });
-                  } else setActiveId(zone.id);
+                  } else toggle(zone.id);
                 }}
               />
             ))}
-            <g className="pointer-events-none" aria-hidden="true">
-              {zones.map((zone) => (
-                <g
-                  key={zone.id}
-                  className="room-pin"
-                  transform={`translate(${zone.pin[0]}, ${zone.pin[1]})`}
-                >
-                  <circle fill="#3B82F6" opacity="0.2" r="12" />
-                  <circle fill="#2563EB" r="6" />
-                  <circle fill="#FFFFFF" r="2.5" />
-                </g>
-              ))}
-            </g>
           </svg>
         </div>
 
@@ -460,110 +482,13 @@ export function IsoOffice() {
         </div>
       </div>
 
-      {active && (
-        <div className="zone-detail" aria-live="polite">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center space-x-3">
-              <span className="px-2.5 py-1 rounded bg-blue-50 text-blue-700 font-mono-code text-xs font-semibold">
-                {active.tag}
-              </span>
-              <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
-                Architecture Spec
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition"
-                onClick={() => step(-1)}
-              >
-                Previous
-              </button>
-              <button
-                className="px-3.5 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition"
-                onClick={() => step(1)}
-              >
-                Next Zone
-              </button>
-              <button
-                className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition"
-                onClick={() => setActiveId(null)}
-              >
-                Lihat seluruh kantor
-              </button>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-              {active.name}
-            </h2>
-            <p className="text-xs font-medium text-slate-500 mt-1">
-              {active.subtitle}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              ['Total Capacity', active.capacity],
-              ['Floor Surface', active.area],
-              ['Ambient Sound', active.acoustic],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="p-3.5 rounded-xl bg-slate-50 border border-slate-100"
-              >
-                <div className="text-[11px] font-medium text-slate-400">
-                  {label}
-                </div>
-                <div className="text-base font-semibold text-slate-800 mt-0.5">
-                  {value}
-                </div>
-              </div>
-            ))}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="text-[11px] font-medium text-slate-400">
-                Status
-              </div>
-              <div className="text-base font-semibold text-emerald-600 flex items-center space-x-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span>{active.status}</span>
-              </div>
-            </div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Design &amp; Furnishing
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                {active.desc}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
-                Key Amenities &amp; Gear
-              </h3>
-              <ul className="space-y-2 text-xs text-slate-700">
-                {active.amenities.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-center space-x-2 text-slate-600"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="zone-grid" role="group" aria-label="Fokus area kantor">
         {zones.map((zone, index) => (
           <button
             key={zone.id}
             className="zone-button"
             aria-pressed={zone.id === activeId}
-            onClick={() => setActiveId(zone.id)}
+            onClick={() => toggle(zone.id)}
           >
             <span>{String(index + 1).padStart(2, '0')}</span>
             <strong>{zone.label}</strong>

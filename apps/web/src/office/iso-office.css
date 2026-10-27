@@ -9,29 +9,34 @@
   overflow: hidden;
 }
 
-/* Interactive room polygon hotspots */
+/* Clickable zones are invisible; only keyboard focus draws an outline. */
 .room-poly {
   cursor: pointer;
   fill: transparent;
   stroke: transparent;
-  stroke-width: 2.5;
-  stroke-linejoin: round;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.room-poly:hover,
 .room-poly:focus-visible {
-  fill: rgba(59, 130, 246, 0.12);
-  stroke: rgba(59, 130, 246, 0.7);
-  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.35));
+  stroke: rgba(59, 130, 246, 0.9);
+  stroke-width: 3;
   outline: none;
 }
-.room-poly.active {
-  fill: rgba(16, 185, 129, 0.16);
-  stroke: rgba(16, 185, 129, 0.9);
-  filter: drop-shadow(0 0 14px rgba(16, 185, 129, 0.45));
+/* The map is pixel art: when zoomed, hard pixel edges stay sharper than smoothing. */
+.map-zoomed {
+  image-rendering: pixelated;
 }
-.room-pin {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+/* Leo breathes slowly; nothing moves for people who prefer reduced motion. */
+@keyframes leo-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.2px);
+  }
+}
+.leo-idle {
+  animation: leo-bob 2.6s ease-in-out infinite;
 }
 
 /* Living environment */
@@ -159,17 +164,12 @@
   .garden-tree-crown,
   .garden-tree-secondary,
   .lantern-light,
-  .pool-duck-swimmer {
+  .pool-duck-swimmer,
+  .leo-idle {
     animation: none !important;
   }
 }
 
-.zone-detail {
-  display: grid;
-  gap: 20px;
-  padding: 24px;
-  border-top: 1px solid var(--border);
-}
 .zone-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

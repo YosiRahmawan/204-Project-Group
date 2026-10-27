@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { summarize } from './stats';
+import { ago, needsLeo, recentActivity, summarize } from './stats';
 import { demoTasks } from './demo';
 
 test('an empty board has zero everything and no approval rate', () => {
@@ -25,4 +25,23 @@ test('counts statuses, owners, revisions and the approval rate', () => {
   expect(Object.values(s.byOwner).reduce((a, b) => a + b, 0)).toBe(
     tasks.filter((t) => t.owner).length,
   );
+});
+
+test('activity feed lists the newest events first and the wait list holds approvals', () => {
+  const tasks = demoTasks(10_000_000);
+  const feed = recentActivity(tasks, 3);
+  expect(feed).toHaveLength(3);
+  expect(feed[0]!.at).toBeGreaterThanOrEqual(feed[1]!.at);
+  expect(feed[1]!.at).toBeGreaterThanOrEqual(feed[2]!.at);
+  expect(needsLeo(tasks).every((t) => t.status === 'menunggu-approval')).toBe(
+    true,
+  );
+  expect(needsLeo(tasks)).toHaveLength(1);
+});
+
+test('formats relative time', () => {
+  expect(ago(100_000, 100_000)).toBe('baru saja');
+  expect(ago(10 * 60_000, 5 * 60_000)).toBe('5m');
+  expect(ago(3 * 3_600_000, 0)).toBe('3j');
+  expect(ago(50 * 3_600_000, 0)).toBe('2h');
 });

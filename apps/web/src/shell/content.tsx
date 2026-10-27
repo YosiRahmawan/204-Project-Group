@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import officeImage from '../../../../Img/Map/Denah Kantor Mewah 204. Project Group.png';
+import officeImage from '../../../../assets/runtime/maps/office-iso.jpg';
 import { team, type Member } from './team';
 import { Face } from './faces';
 import type { PageId } from './navigation';
 import { IsoOffice } from '../office/IsoOffice';
 import { ApprovalInbox, TaskBoard } from '../tasks/TaskPages';
 import { Stats } from '../tasks/StatsPanel';
+import { ActivityLog } from '../tasks/ActivityLog';
 
 export function OfficeReference() {
   const [failed, setFailed] = useState(false);
@@ -13,27 +14,29 @@ export function OfficeReference() {
     <figure className="office-reference">
       <div className="section-heading">
         <span className="eyebrow">THE WORKPLACE</span>
-        <span className="subtle-label">
-          Referensi desain · bukan peta interaktif
-        </span>
+        <a className="text-link" href="#/office">
+          Buka peta interaktif <span aria-hidden="true">↗</span>
+        </a>
       </div>
       {failed ? (
         <div className="image-fallback" role="status">
-          Gambar referensi tidak dapat dimuat. Daftar delapan area tersedia pada
-          halaman Kantor virtual.
+          Gambar peta tidak dapat dimuat. Delapan area tersedia pada halaman
+          Kantor virtual.
         </div>
       ) : (
-        <img
-          src={officeImage}
-          width="1536"
-          height="1024"
-          alt="Referensi kantor isometrik 204. PROJECT GROUP dengan delapan area, interior putih, taman, dan kolam."
-          onError={() => setFailed(true)}
-        />
+        <a href="#/office" aria-label="Buka peta kantor interaktif">
+          <img
+            src={officeImage}
+            width="1376"
+            height="768"
+            alt="Peta isometrik kantor 204. PROJECT GROUP dengan delapan area, interior putih, taman, dan kolam."
+            onError={() => setFailed(true)}
+          />
+        </a>
       )}
       <figcaption>
         <span>Tempat kolaborasi berikutnya.</span>
-        <span className="subtle-label">8 area yang direncanakan</span>
+        <span className="subtle-label">8 area</span>
       </figcaption>
     </figure>
   );
@@ -93,28 +96,6 @@ export function PageContent({
             Lihat kantor <span aria-hidden="true">↗</span>
           </a>
         </section>
-        <div className="summary-strip">
-          <div>
-            <span>Struktur tim</span>
-            <strong>
-              06 <small>AI direncanakan</small>
-            </strong>
-          </div>
-          <div>
-            <span>Pemilik & keputusan</span>
-            <strong>
-              01 <small>CEO manusia</small>
-            </strong>
-          </div>
-          <div>
-            <span>Eksekusi AI</span>
-            <strong className="summary-text">Belum aktif</strong>
-          </div>
-          <div>
-            <span>Penggunaan AI</span>
-            <strong className="summary-text">Belum tersedia</strong>
-          </div>
-        </div>
         <Stats />
         <div className="overview-grid">
           <OfficeReference />
@@ -148,6 +129,7 @@ export function PageContent({
     );
   if (page === 'office') return <IsoOffice />;
   if (page === 'tasks') return <TaskBoard />;
+  if (page === 'activity') return <ActivityLog />;
   if (page === 'approvals') return <ApprovalInbox />;
   if (page === 'team')
     return (
@@ -213,14 +195,6 @@ export function PageContent({
         'Eksekusi, token, dan biaya belum tersedia. Status backend terhubung hanya menunjukkan health API, bukan aktivitas AI.',
       action: 'Lihat struktur tim',
       href: '#/team',
-    },
-    activity: {
-      marker: '04',
-      title: 'Belum ada riwayat pekerjaan',
-      description:
-        'Riwayat dan audit log akan berasal dari workflow backend. Belum ada sumber log pekerjaan yang dihubungkan.',
-      action: 'Kembali ke ringkasan',
-      href: '#/overview',
     },
   }[page];
   return (
