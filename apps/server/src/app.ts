@@ -22,6 +22,8 @@ import { registerAgentRoutes } from './agent-routes.js';
 import { createCampaigns } from './campaigns.js';
 import { registerCampaignRoutes } from './campaign-routes.js';
 import { registerMemoryRoutes } from './memory.js';
+import { createHermes } from './hermes.js';
+import { akiraRuntime, createAkira, registerAkiraRoutes } from './akira.js';
 import { createVault } from './vault.js';
 
 const publicPaths = new Set(['/health', '/auth/login']);
@@ -190,13 +192,33 @@ export function createApp(
   );
   const audit = (action: string, detail: string) =>
     store.audit('Leo', action, detail);
+  const hermes = createHermes({
+    url: config.HERMES_API_URL,
+    key: config.HERMES_API_KEY,
+    fetchImpl,
+  });
+  const akiraDeps = { hermes, agents, db, audit, announce };
+  const akira = createAkira(akiraDeps);
+  // Hermes is checked now and every 30 seconds, so "ready" is never older than that.
+  if (hermes.configured) {
+    void hermes.check();
+    const pulse = setInterval(() => void hermes.check(), 30_000);
+    pulse.unref();
+    app.addHook('onClose', async () => clearInterval(pulse));
+  }
   registerAgentRoutes(app, {
     agents,
     registry,
     env: process.env,
     audit,
     announce,
+    // Without Hermes configured, Akira shows the same default as everyone else.
+    runtimeOf: (id) =>
+      id === 'akira' && hermes.configured
+        ? akiraRuntime(hermes, akira.isBusy)
+        : null,
   });
+  registerAkiraRoutes(app, akiraDeps, akira);
   registerMemoryRoutes(app, {
     vault: config.OBSIDIAN_VAULT_PATH
       ? createVault(config.OBSIDIAN_VAULT_PATH)

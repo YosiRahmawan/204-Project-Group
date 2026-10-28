@@ -12,6 +12,7 @@ import {
   normalizeAgent,
   ENGINE_MESSAGE,
   type AgentInput,
+  type AgentView,
 } from '@204/contracts';
 import { catalogOf, viewOf, type Agents, type Registry } from './agents.js';
 
@@ -21,6 +22,8 @@ type Deps = {
   env: Record<string, string | undefined>;
   audit: (action: string, detail: string) => void;
   announce: () => void;
+  // A runtime verified by an adapter for one agent (Akira via Hermes); null means none exists.
+  runtimeOf?: (id: string) => AgentView['runtime'] | null;
 };
 
 const createBody = z.object({ config: z.unknown() });
@@ -38,10 +41,19 @@ export function registerAgentRoutes(app: FastifyInstance, deps: Deps) {
   const engine = { available: false };
 
   const catalog = () => catalogOf(registry, env);
+  // A disabled agent stays "disabled"; otherwise a verified adapter runtime replaces the default.
+  const present = (
+    agent: ReturnType<typeof agents.list>[number],
+    all: ReturnType<typeof agents.list>,
+  ) => {
+    const base = viewOf(agent, catalog(), all, engine);
+    const runtime = agent.enabled ? deps.runtimeOf?.(agent.id) : null;
+    return runtime ? { ...base, runtime } : base;
+  };
   const view = (id: string) => {
     const all = agents.list();
     const agent = all.find((a) => a.id === id);
-    return agent ? viewOf(agent, catalog(), all, engine) : null;
+    return agent ? present(agent, all) : null;
   };
   const invalid = (reply: FastifyReply, fields: Record<string, string>) =>
     reply.code(400).send({ error: 'Konfigurasi tidak valid.', fields });
@@ -86,7 +98,7 @@ export function registerAgentRoutes(app: FastifyInstance, deps: Deps) {
     const all = agents.list();
     const cat = catalog();
     return {
-      agents: all.map((a) => viewOf(a, cat, all, engine)),
+      agents: all.map((a) => present(a, all)),
       meta: {
         providers: cat.providers,
         permissions: PERMISSIONS,

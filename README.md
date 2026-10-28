@@ -29,6 +29,10 @@ Menu **AI Affiliate Studio**: campaign berisi produk, link afiliasi, hook/script
 
 Server bisa memakai vault Obsidian yang sudah ada sebagai memori (isi `OBSIDIAN_VAULT_PATH` di `.env`; vault harus sudah punya folder `.obsidian`). Struktur: `Agents/<agent>/` (memori pribadi), `Shared/`, `Strategy/`, `Campaigns/`, `Decisions/`, `Logs/`. Agent hanya menulis langsung ke folder pribadinya; perubahan ke area bersama berupa **usulan** yang harus Anda setujui (`/memory/proposals`). Penulisan atomik, ada backup di `.204-backups/`, konflik ditolak (tidak menimpa), path dibatasi di dalam vault, dan catatan yang berisi kunci/kata sandi ditolak. Pelajaran agent (`/memory/lessons`) tersimpan sebagai catatan "belum dievaluasi". Memori **tidak** otomatis dimasukkan ke prompt agent, dan Hermes belum diaktifkan.
 
+## Akira lewat Hermes (Fase 1)
+
+Backend memanggil Hermes lewat API server resminya (OpenAI-compatible, hanya `127.0.0.1`), tidak pernah dari browser. Isi `HERMES_API_URL` dan `HERMES_API_KEY` di `.env`, jalankan `hermes -p akira gateway run` (profile `akira`: toolset dibatasi tanpa terminal/file, memori Hermes mati, tanpa Telegram). Di Tim & agent, atur Akira ke provider **Hermes** model **akira** dan beri anggaran token. Halaman **Monitoring AI** menampilkan koneksi Hermes (dicek tiap 30 detik), runtime Akira, dan riwayat eksekusi (token; biaya "tidak tersedia" karena Hermes tidak melaporkan harga). Server menolak Akira bila Hermes punya tool yang bisa bertindak. Fase 1 hanya menjawab; perencanaan dan delegasi menyusul.
+
 ## Pemeriksaan
 
 `corepack pnpm lint`, `typecheck`, `test`, `build`, `format:check`. Semuanya juga dijalankan GitHub Actions (`.github/workflows/ci.yml`) pada setiap push ke main dan pull request.

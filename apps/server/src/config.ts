@@ -25,6 +25,16 @@ const configSchema = z.object({
   // Model registry file; the default is apps/server/models.registry.json.
   // An existing Obsidian vault used as shared memory; unset means memory is off.
   OBSIDIAN_VAULT_PATH: z.string().optional(),
+  // Hermes API server (OpenAI-compatible). Loopback only, so its key can never be sent elsewhere.
+  HERMES_API_URL: z
+    .url()
+    .refine(
+      (value) =>
+        ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(value).hostname),
+      'HERMES_API_URL must point to this machine (127.0.0.1 or localhost)',
+    )
+    .optional(),
+  HERMES_API_KEY: z.string().min(16).optional(),
   MODEL_REGISTRY_PATH: z.string().optional(),
   SESSION_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   LOG_LEVEL: z

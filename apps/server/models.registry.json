@@ -33,6 +33,19 @@
       ]
     },
     {
+      "id": "hermes",
+      "label": "Hermes (runtime lokal)",
+      "keyEnv": "HERMES_API_KEY",
+      "models": [
+        {
+          "id": "akira",
+          "label": "Hermes · profile akira",
+          "supportsTemperature": false,
+          "maxOutputTokens": null
+        }
+      ]
+    },
+    {
       "id": "openai",
       "label": "OpenAI",
       "keyEnv": "OPENAI_API_KEY",

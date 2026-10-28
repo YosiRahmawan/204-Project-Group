@@ -10,6 +10,7 @@ import { ActivityLog } from '../tasks/ActivityLog';
 import { AgentsPage } from '../agents/AgentsPage';
 import { AffiliatePage } from '../affiliate/AffiliatePage';
 import { MemoryPage } from '../memory/MemoryPage';
+import { MonitoringPage } from '../monitoring/MonitoringPage';
 
 export function OfficeReference() {
   const [failed, setFailed] = useState(false);
@@ -169,34 +170,5 @@ export function PageContent({
         </p>
       </section>
     );
-  const copy = {
-    monitoring: {
-      marker: '03',
-      title: 'AI belum terhubung',
-      description:
-        'Eksekusi, token, dan biaya belum tersedia. Status backend terhubung hanya menunjukkan health API, bukan aktivitas AI.',
-      action: 'Lihat struktur tim',
-      href: '#/team',
-    },
-  }[page];
-  return (
-    <section className="empty-state">
-      <span className="empty-marker" aria-hidden="true">
-        {copy.marker}
-      </span>
-      <span className="badge">Fase berikutnya</span>
-      <h2>{copy.title}</h2>
-      <p>{copy.description}</p>
-      <a className="button" href={copy.href}>
-        {copy.action} <span aria-hidden="true">→</span>
-      </a>
-      <details className="workflow-details">
-        <summary>Bagaimana alur pekerjaan nantinya?</summary>
-        <p>
-          Instruksi CEO → analisis Akira → pembagian ke agent → pengerjaan →
-          review → persetujuan atau revisi CEO → finalisasi.
-        </p>
-      </details>
-    </section>
-  );
+  return <MonitoringPage />;
 }
