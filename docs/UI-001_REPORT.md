@@ -40,7 +40,7 @@ App.tsx: shell, routing subscription dan dialog. shell/navigation.ts: daftar rut
 
 Test backend pertama sempat timeout5000ms pada cold run. Diulang tanpa mengubah timeout, kemudian dua full-suite run lulus. Percobaan awal shell juga gagal sesuai harapan sebelum modul/navigasi tersedia. Tidak menganggap error percobaan sebagai hasil akhir.
 
-Screenshot hasil desktop: [ui-001-desktop.png](screenshots/ui-001-desktop.png). Ukuran viewport browser sementara telah dikembalikan ke default.
+Screenshot lama dihapus karena menampilkan peta yang sudah diganti.
 
 ## Batas verifikasi dan risiko
 

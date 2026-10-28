@@ -1,4 +1,4 @@
-import { advance, createTask, decide, type Task } from './workflow';
+import { advance, createTask, decide, type Task } from './workflow.js';
 
 // Sample tasks in every stage, so the statistics can be seen before real use.
 const scenarios: [string, number, 'approve' | 'revise' | 'reject' | null][] = [
@@ -21,7 +21,7 @@ export function demoTasks(now: number, firstSequence = 1): Task[] {
     let task = created.task;
     const run = (count: number) => {
       for (let i = 0; i < count; i++) {
-        const next = advance(task, sequence, at + (i + 1) * 60_000);
+        const next = advance(task, at + (i + 1) * 60_000);
         if (!next.ok) throw new Error(next.error);
         task = next.task;
       }

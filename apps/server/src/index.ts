@@ -1,7 +1,16 @@
 import { createApp } from './app.js';
 import { parseConfig } from './config.js';
 
-const config = parseConfig(process.env);
+let config;
+try {
+  config = parseConfig(process.env);
+} catch (error) {
+  console.error(
+    'Server configuration is invalid. Create a .env file in the project root (see .env.example) with OWNER_PASSWORD=<at least 12 characters>.',
+    error instanceof Error ? error.message : error,
+  );
+  process.exit(1);
+}
 const app = createApp(config, true);
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

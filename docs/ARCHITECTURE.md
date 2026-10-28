@@ -1,23 +1,23 @@
 # Arsitektur — 204. PROJECT GROUP
 
-Status: keputusan awal dan kontrak rancangan. Fondasi saat ini hanya frontend verifikasi, backend health dan konfigurasi development; database, WebSocket, task/approval dan Hermes belum aktif. Versi yang benar-benar dipilih/terpasang harus dibaca dari package.json, pnpm-lock.yaml, SETUP.md dan SETUP_REPORT.md. Jangan menganggap tabel teknologi sebagai bukti instalasi atau kompatibilitas yang telah diuji.
+Status (28 Oktober 2026): fondasi backend sudah ada. Server Fastify memegang login Leo, API task (buat, langkah, keputusan), unggah file, dan penyimpanan SQLite. Aturan workflow ada di `packages/contracts` dan dipakai server dan web. Belum ada: WebSocket/realtime, agent nyata (Hermes), integrasi Obsidian dan platform eksternal. Versi yang benar-benar terpasang dibaca dari package.json dan pnpm-lock.yaml.
 
 ## Keputusan teknologi
 
-| Bagian           | Teknologi                    | Tahap                                                                  |
-| ---------------- | ---------------------------- | ---------------------------------------------------------------------- |
-| UI dan bahasa    | React + TypeScript strict    | Fondasi                                                                |
-| Build dan style  | Vite + Tailwind CSS          | Fondasi                                                                |
-| Simulasi         | Phaser, peta Tiled           | Dependency Phaser fondasi; implementasi/editor peta nanti              |
-| Server           | Node.js + Fastify            | Fondasi, REST GET /health                                              |
-| Validasi/kontrak | Zod + TypeScript             | Fondasi; schema domain nanti                                           |
-| Real-time        | WebSocket                    | Rencana; tidak perlu aktif sekarang                                    |
-| Persistensi      | SQLite, kandidat Drizzle ORM | Fase backend berikutnya; evaluasi driver dan migrasi sebelum instalasi |
-| Test             | Vitest                       | Fondasi                                                                |
-| E2E              | Playwright                   | Fase UI/workflow berikutnya                                            |
-| Desktop          | Tauri                        | Fase akhir; Rust/C++/WebView2 hanya diaudit sekarang                   |
-| Orkestrasi AI    | Hermes Adapter               | Kontrak pemisah; belum integrasi nyata                                 |
-| Workspace        | pnpm, satu lockfile root     | Fondasi                                                                |
+| Bagian           | Teknologi                          | Tahap                                                     |
+| ---------------- | ---------------------------------- | --------------------------------------------------------- |
+| UI dan bahasa    | React + TypeScript strict          | Fondasi                                                   |
+| Build dan style  | Vite + Tailwind CSS                | Fondasi                                                   |
+| Peta kantor      | Gambar isometrik + lapisan SVG     | Terpasang; Phaser dan Tiled tidak dipakai lagi            |
+| Server           | Node.js + Fastify                  | Fondasi, REST GET /health                                 |
+| Validasi/kontrak | Zod + TypeScript                   | Fondasi; schema domain nanti                              |
+| Real-time        | WebSocket                          | Rencana; tidak perlu aktif sekarang                       |
+| Persistensi      | SQLite bawaan Node (`node:sqlite`) | Terpasang untuk task dan file; migrasi bertahap belum ada |
+| Test             | Vitest                             | Fondasi                                                   |
+| E2E              | Playwright                         | Fase UI/workflow berikutnya                               |
+| Desktop          | Tauri                              | Fase akhir; Rust/C++/WebView2 hanya diaudit sekarang      |
+| Orkestrasi AI    | Hermes Adapter                     | Kontrak pemisah; belum integrasi nyata                    |
+| Workspace        | pnpm, satu lockfile root           | Fondasi                                                   |
 
 Audit awal menggunakan Node.js 22.20.0 yang tersedia; pemilihan dependency mengikuti metadata registry/dokumentasi resmi dan engine aktual, bukan tebakan “latest”. Konflik major/engine harus dijelaskan sebelum mengganti stack atau memasang tool sistem. Tidak ada kebutuhan Docker/Python/Rust untuk health dan halaman awal.
 

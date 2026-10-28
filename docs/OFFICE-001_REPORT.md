@@ -39,5 +39,3 @@ Ini ruang prosedural sederhana untuk validasi interaksi, belum rekonstruksi visu
 Tidak ada dependency baru, commit, push, perubahan Img, atau deployment. Sheet Akira sekitar 2.3 MB masih dimuat penuh; optimasi atlas dilakukan bersama produksi aset.
 
 Buka `http://127.0.0.1:5173/#/office`. Jika server belum berjalan, jalankan `corepack pnpm dev` di root proyek.
-
-![Pratinjau](screenshots/office-001-preview.png)

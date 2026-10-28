@@ -1,5 +1,6 @@
-// Simulated task workflow: deterministic, in memory, no backend and no AI.
-import type { Attachment } from './attachments';
+// Task workflow rules, shared by the server (which decides) and the web (which shows).
+// The steps are simulated: no AI runs them yet.
+import type { Attachment } from './attachments.js';
 
 export const agents = ['Aeri', 'Amy', 'Kuro', 'Mail', 'Zegion'] as const;
 export type Agent = (typeof agents)[number];
@@ -16,6 +17,8 @@ export type Status =
 export type HistoryKind = 'info' | 'warn' | 'done';
 export type Decision = 'approve' | 'revise' | 'reject';
 export type Task = {
+  // Sequence number; the id is derived from it, and agent rotation uses it.
+  number: number;
   id: string;
   instruction: string;
   status: Status;
@@ -41,7 +44,7 @@ const keywords: [RegExp, Agent][] = [
 
 export function createTask(
   instruction: string,
-  sequence: number,
+  number: number,
   now: number,
   attachments: Attachment[] = [],
 ): Result {
@@ -49,7 +52,8 @@ export function createTask(
   if (!text && attachments.length === 0)
     return fail('Tulis instruksi atau lampirkan minimal satu file.');
   return ok({
-    id: `T-${String(sequence).padStart(3, '0')}`,
+    number,
+    id: `T-${String(number).padStart(3, '0')}`,
     instruction: text || '(hanya lampiran)',
     status: 'dikirim',
     owner: null,
@@ -82,7 +86,7 @@ const log = (
   });
 
 // One simulated step by Akira or the owner. Only the CEO can decide an approval.
-export function advance(task: Task, sequence: number, now: number): Result {
+export function advance(task: Task, now: number): Result {
   switch (task.status) {
     case 'dikirim':
       return log(task, now, 'Akira menganalisis instruksi.', {
@@ -91,7 +95,7 @@ export function advance(task: Task, sequence: number, now: number): Result {
     case 'analisis': {
       const owner =
         keywords.find(([pattern]) => pattern.test(task.instruction))?.[1] ??
-        agents[sequence % agents.length]!;
+        agents[task.number % agents.length]!;
       return log(task, now, `Akira membagikan pekerjaan ke ${owner}.`, {
         status: 'dikerjakan',
         owner,

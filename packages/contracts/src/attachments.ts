@@ -1,10 +1,10 @@
-// Files attached to an instruction. They stay in this browser tab (no backend yet).
+// Files attached to an instruction.
+// A file stored on the server; it is fetched from /files/<id>.
 export type Attachment = {
+  id: string;
   name: string;
   size: number;
   type: string;
-  // Object URL for images so they can be previewed; null for everything else.
-  previewUrl: string | null;
 };
 
 export const maxFiles = 5;

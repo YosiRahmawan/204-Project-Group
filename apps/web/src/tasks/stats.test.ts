@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { ago, needsLeo, recentActivity, summarize } from './stats';
-import { demoTasks } from './demo';
+import { demoTasks } from '@204/contracts';
 
 test('an empty board has zero everything and no approval rate', () => {
   const s = summarize([]);

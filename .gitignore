@@ -12,3 +12,5 @@ test-results/
 *.tsbuildinfo
 *.db
 *.db-*
+.claude/
+data/

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { actions, useTasks } from './store';
 import { ago, needsLeo, recentActivity, summarize } from './stats';
-import { agents, type Status } from './workflow';
+import { agents, type Status } from '@204/contracts';
 import { team } from '../shell/team';
 
 const statusLabel: Record<Status, string> = {

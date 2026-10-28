@@ -6,8 +6,10 @@ import {
   formatSize,
   maxFiles,
   type Attachment,
-} from './attachments';
-import type { Decision, Status, Task } from './workflow';
+  type Decision,
+  type Status,
+  type Task,
+} from '@204/contracts';
 
 const statusLabel: Record<Status, string> = {
   dikirim: 'Instruksi dikirim',
@@ -54,11 +56,14 @@ function Message({ text }: { text: string | null }) {
   ) : null;
 }
 
-function StepButton({ id }: { id: string }) {
+function StepButton({ number }: { number: number }) {
   const [error, setError] = useState<string | null>(null);
   return (
     <>
-      <button className="button" onClick={() => setError(actions.advance(id))}>
+      <button
+        className="button"
+        onClick={() => void actions.advance(number).then(setError)}
+      >
         Langkah berikutnya (simulasi)
       </button>
       <Message text={error} />
@@ -78,19 +83,26 @@ function AttachmentList({
     <ul className="attachment-list">
       {items.map((item, index) => (
         <li key={`${item.name}-${index}`} className="attachment">
-          {item.previewUrl ? (
+          {item.type.startsWith('image/') ? (
             <a
-              href={item.previewUrl}
+              href={`/api/files/${item.id}`}
               target="_blank"
               rel="noreferrer"
               title={`Buka ${item.name}`}
             >
-              <img src={item.previewUrl} alt={`Pratinjau ${item.name}`} />
+              <img
+                src={`/api/files/${item.id}`}
+                alt={`Pratinjau ${item.name}`}
+              />
             </a>
           ) : (
-            <span className="attachment-icon" aria-hidden="true">
+            <a
+              className="attachment-icon"
+              href={`/api/files/${item.id}`}
+              title={`Unduh ${item.name}`}
+            >
               {item.type.split('/')[1]?.slice(0, 4).toUpperCase() ?? 'FILE'}
-            </span>
+            </a>
           )}
           <span className="attachment-name">
             {item.name}
@@ -122,21 +134,22 @@ function AttachmentPicker({
   setProblem: (message: string | null) => void;
 }) {
   const [dragging, setDragging] = useState(false);
-  const add = (list: FileList | null) => {
+  const [uploading, setUploading] = useState(false);
+  // The browser only pre-checks; the server decides from the file's real content.
+  const add = async (list: FileList | null) => {
     const files = [...(list ?? [])];
     const { accepted, errors } = checkFiles(items.length, files);
     setProblem(errors.length ? errors.join(' ') : null);
-    const added = accepted.map((index): Attachment => {
-      const file = files[index]!;
-      return {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        previewUrl: file.type.startsWith('image/')
-          ? URL.createObjectURL(file)
-          : null,
-      };
-    });
+    setUploading(true);
+    const results = await Promise.all(
+      accepted.map((index) => actions.upload(files[index]!)),
+    );
+    setUploading(false);
+    const added = results.flatMap((r) =>
+      'attachment' in r ? [r.attachment] : [],
+    );
+    const refused = results.flatMap((r) => ('error' in r ? [r.error] : []));
+    if (refused.length) setProblem([...errors, ...refused].join(' '));
     setItems([...items, ...added]);
   };
   return (
@@ -168,16 +181,13 @@ function AttachmentPicker({
         }}
       />
       <span className="subtle-label">
-        atau seret file ke sini · maks {maxFiles} file, 10 MB per file · hanya
-        disimpan di browser ini
+        atau seret file ke sini · maks {maxFiles} file, 10 MB per file ·
+        disimpan di server
+        {uploading && ' · mengunggah…'}
       </span>
       <AttachmentList
         items={items}
-        onRemove={(index) => {
-          const removed = items[index];
-          if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
-          setItems(items.filter((_, i) => i !== index));
-        }}
+        onRemove={(index) => setItems(items.filter((_, i) => i !== index))}
       />
     </div>
   );
@@ -195,19 +205,21 @@ export function TaskBoard() {
         <span className="badge">Simulasi · tanpa AI</span>
       </div>
       <p className="section-note">
-        Alur diuji dengan layanan palsu di browser ini. Tidak ada AI atau
-        backend yang bekerja, dan data hilang saat halaman dimuat ulang.
+        Task dan lampiran tersimpan di server (database SQLite) dan bertahan
+        saat halaman dimuat ulang. Langkah-langkahnya masih simulasi: belum ada
+        AI yang mengerjakannya.
       </p>
       <form
         className="task-form"
         onSubmit={(event) => {
           event.preventDefault();
-          const problem = actions.create(text, files);
-          setError(problem);
-          if (!problem) {
-            setText('');
-            setFiles([]);
-          }
+          void actions.create(text, files).then((problem) => {
+            setError(problem);
+            if (!problem) {
+              setText('');
+              setFiles([]);
+            }
+          });
         }}
       >
         <label htmlFor="instruction">Instruksi untuk Akira</label>
@@ -275,7 +287,7 @@ export function TaskBoard() {
                             Putuskan →
                           </a>
                         ) : (
-                          !finished(task) && <StepButton id={task.id} />
+                          !finished(task) && <StepButton number={task.number} />
                         )}
                         <History task={task} />
                       </li>
@@ -295,7 +307,9 @@ function Decide({ task }: { task: Task }) {
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const run = (decision: Decision) =>
-    setError(actions.decide(task.id, decision, task.version, reason));
+    void actions
+      .decide(task.number, decision, task.version, reason)
+      .then(setError);
   return (
     <div className="task-decide">
       <label htmlFor={`reason-${task.id}`}>

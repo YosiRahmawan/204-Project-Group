@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { advance, createTask, decide, type Task } from './workflow';
+import { advance, createTask, decide, type Task } from './workflow.js';
 
 const make = (instruction = 'Buat konten Instagram'): Task => {
   const result = createTask(instruction, 1, 0);
@@ -9,7 +9,7 @@ const make = (instruction = 'Buat konten Instagram'): Task => {
 const step = (task: Task, times = 1): Task => {
   let current = task;
   for (let i = 0; i < times; i++) {
-    const result = advance(current, 1, i);
+    const result = advance(current, i);
     if (!result.ok) throw new Error(result.error);
     current = result.task;
   }
@@ -26,13 +26,20 @@ test('instruction goes through Akira and the owner to the CEO', () => {
 
 test('rejects empty instructions and steps that do not exist', () => {
   expect(createTask('   ', 1, 0).ok).toBe(false);
-  const file = { name: 'a.png', size: 1, type: 'image/png', previewUrl: null };
+  const file = { id: 'f1', name: 'a.png', size: 1, type: 'image/png' };
   expect(createTask('', 1, 0, [file]).ok).toBe(true);
-  expect(advance(step(make(), 4), 1, 0).ok).toBe(false);
+  expect(advance(step(make(), 4), 0).ok).toBe(false);
 });
 
-test('unmatched instructions rotate between agents', () => {
-  expect(step(make('Sesuatu yang umum'), 2).owner).toBe('Amy');
+test('unmatched instructions rotate by the task number, not by when they are advanced', () => {
+  const owner = (number: number) => {
+    const created = createTask('Sesuatu yang umum', number, 0);
+    if (!created.ok) throw new Error(created.error);
+    return step(created.task, 2).owner;
+  };
+  expect(owner(1)).toBe('Amy');
+  expect(owner(4)).toBe('Zegion');
+  expect(owner(6)).toBe('Amy');
 });
 
 test('approving needs the current result version and is idempotent', () => {

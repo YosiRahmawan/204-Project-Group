@@ -10,6 +10,14 @@ const configSchema = z.object({
       return ['http:', 'https:'].includes(url.protocol) && url.origin === value;
     }, 'Expected an HTTP(S) origin without a path')
     .default('http://127.0.0.1:5173'),
+  // The only login: Leo's password. There is no default; the server will not start without it.
+  OWNER_PASSWORD: z
+    .string()
+    .min(12, 'OWNER_PASSWORD must have at least 12 characters'),
+  // Relative paths are resolved from the folder the server is started in.
+  DATABASE_PATH: z.string().default('data/204.db'),
+  UPLOAD_DIR: z.string().default('data/uploads'),
+  SESSION_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
@@ -18,3 +26,5 @@ const configSchema = z.object({
 export function parseConfig(env: Record<string, string | undefined>) {
   return configSchema.parse(env);
 }
+
+export type Config = ReturnType<typeof parseConfig>;

@@ -5,7 +5,8 @@ import { type Member } from './shell/team';
 import { useHealth } from './shell/use-health';
 import { Face } from './shell/faces';
 import { Icon } from './shell/icons';
-import { useTasks } from './tasks/store';
+import { actions, usePhase, useTasks } from './tasks/store';
+import { Login } from './shell/Login';
 import { roomOf } from './office/people';
 
 function subscribeToHash(callback: () => void) {
@@ -32,6 +33,7 @@ export function App() {
   const page = resolvePage(hash);
   const { status, retry } = useHealth();
   const tasks = useTasks();
+  const phase = usePhase();
   const [menuOpen, setMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const toggleCollapsed = () => {
@@ -47,6 +49,8 @@ export function App() {
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const previousHash = useRef(hash);
+
+  useEffect(() => actions.start(), []);
 
   useEffect(() => {
     document.title = `${page.label} · 204. PROJECT GROUP`;
@@ -68,6 +72,8 @@ export function App() {
     error: 'Backend tidak terjangkau',
     offline: 'Perangkat offline',
   };
+
+  if (phase === 'locked') return <Login />;
 
   return (
     <div className={collapsed ? 'app-shell collapsed' : 'app-shell'}>
@@ -165,6 +171,12 @@ export function App() {
               <span className="topbar-owner">
                 Leo <Face name="Leo" className="owner-avatar" />
               </span>
+              <button
+                className="retry-button"
+                onClick={() => void actions.logout()}
+              >
+                Keluar
+              </button>
             </div>
           </header>
           <div className="connection-bar">

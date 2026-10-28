@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { workOf } from './work';
-import { demoTasks } from '../tasks/demo';
+import { demoTasks } from '@204/contracts';
 
 test('an empty office has everyone waiting', () => {
   for (const name of ['Leo', 'Akira', 'Aeri', 'Zegion'])

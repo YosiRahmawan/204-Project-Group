@@ -4,7 +4,7 @@ import {
   type HistoryKind,
   type Status,
   type Task,
-} from './workflow';
+} from '@204/contracts';
 
 export type Summary = {
   total: number;

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { checkFiles, formatSize, maxBytes, maxFiles } from './attachments';
+import { checkFiles, formatSize, maxBytes, maxFiles } from './attachments.js';
 
 const file = (name: string, type: string, size = 1000) => ({
   name,

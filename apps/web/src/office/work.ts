@@ -1,4 +1,4 @@
-import type { Task } from '../tasks/workflow';
+import type { Task } from '@204/contracts';
 
 export type Work = { text: string; state: 'working' | 'waiting' | 'idle' };
 
