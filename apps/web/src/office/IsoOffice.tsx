@@ -1,25 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import '@fontsource/playfair-display/500.css';
 import mapUrl from '../../../../assets/runtime/maps/office-iso.jpg';
-import leoAtlas from '../../../../assets/runtime/characters/leo.png';
-import sprites from '../../../../assets/runtime/characters/manifest.json';
+import { people, personSize, roleOf, sheet } from './people';
+import { workOf } from './work';
+import { useTasks } from '../tasks/store';
 import { zones, type Zone } from './zones';
 import { createSplash } from './splash';
 import './iso-office.css';
-
-// Leo, the CEO, stands in the Command Room. His feet are at (leoX, leoY) in map pixels.
-const leo = sprites.leo;
-const leoX = 1062;
-const leoY = 606;
-const leoHeight = 52;
-const leoWidth = (leo.frame.width / leo.frame.height) * leoHeight;
 
 const mapWidth = 1376;
 const mapHeight = 768;
 
 // Pan and zoom that centre a zone in the frame; null shows the whole office.
-function frameTransform(zone: Zone | null) {
-  if (!zone) return 'translate(0%, 0%) scale(1)';
+function frame(zone: Zone | null) {
+  if (!zone) return { transform: 'translate(0%, 0%) scale(1)', scale: 1 };
   const points = zone.points
     .split(' ')
     .map((p) => p.split(',').map(Number) as [number, number]);
@@ -34,13 +28,18 @@ function frameTransform(zone: Zone | null) {
   );
   const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
   const cy = (Math.max(...ys) + Math.min(...ys)) / 2;
-  return `translate(${50 - ((scale * cx) / mapWidth) * 100}%, ${50 - ((scale * cy) / mapHeight) * 100}%) scale(${scale})`;
+  return {
+    transform: `translate(${50 - ((scale * cx) / mapWidth) * 100}%, ${50 - ((scale * cy) / mapHeight) * 100}%) scale(${scale})`,
+    scale,
+  };
 }
 
 export function IsoOffice() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [tip, setTip] = useState({ x: 0, y: 0 });
+  const tasks = useTasks();
+  const view = frame(zones.find((z) => z.id === activeId) ?? null);
   const stage = useRef<HTMLDivElement>(null);
   const wrapper = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -125,7 +124,7 @@ export function IsoOffice() {
     >
       <div
         ref={stage}
-        className="relative w-full aspect-[16/9] bg-white select-none overflow-hidden"
+        className="iso-stage relative w-full aspect-[16/9] bg-white select-none overflow-hidden"
         onMouseMove={(event) => {
           const area = event.currentTarget.getBoundingClientRect();
           setTip({
@@ -138,8 +137,10 @@ export function IsoOffice() {
           ref={wrapper}
           className="absolute inset-0 origin-top-left"
           style={{
-            transform: frameTransform(active),
+            transform: view.transform,
             transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
+            // Name tags divide this out so they keep their size while the map zooms.
+            ['--zoom' as string]: view.scale,
           }}
         >
           <img
@@ -216,29 +217,40 @@ export function IsoOffice() {
             </g>
 
             <g aria-hidden="true">
-              <ellipse
-                cx={leoX}
-                cy={leoY - 1}
-                rx={leoWidth * 0.42}
-                ry="3.5"
-                fill="#3b2c22"
-                opacity="0.22"
-              />
-              <g className="leo-idle">
-                <svg
-                  x={leoX - leoWidth / 2}
-                  y={leoY - leoHeight}
-                  width={leoWidth}
-                  height={leoHeight}
-                  viewBox={`0 0 ${leo.frame.width} ${leo.frame.height}`}
-                >
-                  <image
-                    href={leoAtlas}
-                    width={leo.frame.width * leo.columns}
-                    height={leo.frame.height * 3}
-                  />
-                </svg>
-              </g>
+              {people.map((person, index) => {
+                const { width, height } = personSize(person.id);
+                const { frame, columns } = sheet[person.id];
+                return (
+                  <g key={person.id}>
+                    <ellipse
+                      cx={person.x}
+                      cy={person.y - 1}
+                      rx={width * 0.42}
+                      ry="3.5"
+                      fill="#3b2c22"
+                      opacity="0.22"
+                    />
+                    <g
+                      className="person-idle"
+                      style={{ animationDelay: `${index * 0.45}s` }}
+                    >
+                      <svg
+                        x={person.x - width / 2}
+                        y={person.y - height}
+                        width={width}
+                        height={height}
+                        viewBox={`0 0 ${frame.width} ${frame.height}`}
+                      >
+                        <image
+                          href={person.atlas}
+                          width={frame.width * columns}
+                          height={frame.height * 3}
+                        />
+                      </svg>
+                    </g>
+                  </g>
+                );
+              })}
             </g>
 
             <g>
@@ -466,7 +478,42 @@ export function IsoOffice() {
               />
             ))}
           </svg>
+
+          {/* Above each character: what they are doing, then who they are. */}
+          <div
+            className="absolute inset-0 pointer-events-none z-[25]"
+            aria-hidden="true"
+          >
+            {people.map((person) => {
+              const work = workOf(person.name, tasks);
+              return (
+                <div
+                  key={person.id}
+                  className="person-label"
+                  style={{
+                    left: `${(person.x / mapWidth) * 100}%`,
+                    top: `${((person.y - personSize(person.id).height - 4) / mapHeight) * 100}%`,
+                  }}
+                >
+                  <span className="work-bubble">{work.text}</span>
+                  <span className="name-tag">
+                    <i className={`state ${work.state}`} />
+                    {person.name} · {roleOf(person.name)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
+
+        <ul className="sr-only">
+          {people.map((person) => (
+            <li key={person.id}>
+              {person.name}, {roleOf(person.name)}, {person.room}:{' '}
+              {workOf(person.name, tasks).text}
+            </li>
+          ))}
+        </ul>
 
         <div
           className="absolute pointer-events-none z-30 bg-slate-900/90 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-xl flex items-center space-x-2 border border-slate-700"

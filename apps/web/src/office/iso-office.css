@@ -25,8 +25,8 @@
   image-rendering: pixelated;
 }
 
-/* Leo breathes slowly; nothing moves for people who prefer reduced motion. */
-@keyframes leo-bob {
+/* Everyone breathes slowly; nothing moves for people who prefer reduced motion. */
+@keyframes person-bob {
   0%,
   100% {
     transform: translateY(0);
@@ -35,8 +35,8 @@
     transform: translateY(-1.2px);
   }
 }
-.leo-idle {
-  animation: leo-bob 2.6s ease-in-out infinite;
+.person-idle {
+  animation: person-bob 2.6s ease-in-out infinite;
 }
 
 /* Living environment */
@@ -165,7 +165,7 @@
   .garden-tree-secondary,
   .lantern-light,
   .pool-duck-swimmer,
-  .leo-idle {
+  .person-idle {
     animation: none !important;
   }
 }
@@ -207,5 +207,62 @@
 @media (max-width: 800px) {
   .zone-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Name tags scale with the map width, so they stay readable on small and large screens. */
+.iso-stage {
+  container-type: inline-size;
+}
+.person-label {
+  position: absolute;
+  transform: translate(-50%, -100%) scale(calc(1 / var(--zoom, 1)));
+  transform-origin: 50% 100%;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2em;
+  font-size: clamp(8px, 0.95cqw, 13px);
+  white-space: nowrap;
+}
+.work-bubble {
+  max-width: 17em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0.2em 0.8em;
+  background: #fff;
+  border: 1px solid #e4e1d9;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
+  color: #1e293b;
+}
+.name-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.18em 0.75em;
+  background: #171717;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+}
+.name-tag .state {
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  background: #9ca3af;
+}
+.name-tag .state.working {
+  background: #34d399;
+}
+.name-tag .state.waiting {
+  background: #f59e0b;
+}
+
+/* On narrow screens only the name tags fit; the work bubbles would overlap. */
+@container (max-width: 560px) {
+  .work-bubble {
+    display: none;
   }
 }

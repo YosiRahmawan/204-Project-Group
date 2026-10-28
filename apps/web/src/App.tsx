@@ -6,6 +6,7 @@ import { useHealth } from './shell/use-health';
 import { Face } from './shell/faces';
 import { Icon } from './shell/icons';
 import { useTasks } from './tasks/store';
+import { roomOf } from './office/people';
 
 function subscribeToHash(callback: () => void) {
   window.addEventListener('hashchange', callback);
@@ -200,7 +201,7 @@ export function App() {
           <footer className="workspace-footer">
             <span>204. PROJECT GROUP</span>
             <span>
-              Map delapan area · tujuh karakter, Akira dapat digerakkan.
+              Peta delapan area · tujuh karakter berdiri di ruangannya.
               Integrasi AI belum diaktifkan.
             </span>
           </footer>
@@ -255,7 +256,7 @@ export function App() {
               </div>
               <div>
                 <dt>Di peta kantor</dt>
-                <dd>Belum tampil</dd>
+                <dd>{roomOf(selected.name) ?? 'Belum tampil'}</dd>
               </div>
             </dl>
             <div className="dialog-note">

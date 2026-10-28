@@ -79,3 +79,11 @@ Bar alat di atas peta dan bar petunjuk di bawahnya dihapus. Memilih zona (klik d
 ## Pembaruan — peta lebih bersih, Leo di Command Room
 
 Panel detail zona, titik pin, dan lapisan sorotan hijau dihapus; zona kini hanya tombol dan area klik tak terlihat. Memilih zona (di peta atau tombol) membuat peta zoom ke zona itu, dan memilihnya sekali lagi atau menekan Esc kembali ke tampilan penuh. Area zona kini persegi yang disetel ke isi gambar, sehingga zoom tepat di ruangannya. Saat di-zoom, gambar memakai `image-rendering: pixelated` agar tepi piksel tetap tegas, bukan kabur; gambar sumber hanya 1376 × 768, jadi ketajaman penuh butuh gambar beresolusi lebih besar. Halaman Ringkasan memakai peta yang sama (bukan lagi gambar referensi berlabel) dan menautkannya ke peta interaktif. Leo berdiri di Command Room (sprite dari `assets/runtime/characters/leo.png`) dan bernapas pelan; belum berjalan.
+
+## Pembaruan — semua karakter di peta
+
+Ketujuh karakter berdiri di peta, digambar dari atlas transparan masing-masing: Leo dan Zegion di Command Room, Akira di Lobby, serta Aeri, Amy, Kuro, dan Mail di Main Workspace. Daftar posisi ada di `apps/web/src/office/people.ts`; semuanya bernapas pelan dan belum berjalan. Profil tim menampilkan ruangan masing-masing.
+
+## Pembaruan — nama dan pekerjaan di atas karakter
+
+Di atas tiap karakter ada gelembung putih berisi pekerjaan yang sedang dikerjakan dan tag gelap berisi nama dan peran, dengan titik hijau (bekerja), oranye (menunggu keputusan), atau abu-abu (menunggu tugas). Pekerjaannya dibaca dari task simulasi (`apps/web/src/office/work.ts`): agent menunjukkan task yang ia kerjakan atau revisi, Akira task yang sedang ia analisis atau tinjau, dan Leo jumlah hasil yang menunggu keputusannya. Ukuran label tetap saat peta di-zoom dan gelembung disembunyikan di layar sempit agar tidak bertumpuk.
