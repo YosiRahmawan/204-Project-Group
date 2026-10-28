@@ -702,8 +702,9 @@ export function AgentDrawer({
           {tab === 'memory' && (
             <>
               <p className="section-note">
-                Hanya konfigurasi. Belum terhubung ke Obsidian atau penyimpanan
-                memori apa pun.
+                Pengaturan ini menentukan akses agent ke vault Obsidian lewat
+                server (aktif bila OBSIDIAN_VAULT_PATH diatur). Agent tidak
+                dijalankan dan tidak belajar otomatis.
               </p>
               <label className="check">
                 <input

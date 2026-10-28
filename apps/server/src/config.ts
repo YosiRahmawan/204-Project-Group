@@ -23,6 +23,8 @@ const configSchema = z.object({
     .default('false')
     .transform((value) => value === 'true'),
   // Model registry file; the default is apps/server/models.registry.json.
+  // An existing Obsidian vault used as shared memory; unset means memory is off.
+  OBSIDIAN_VAULT_PATH: z.string().optional(),
   MODEL_REGISTRY_PATH: z.string().optional(),
   SESSION_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   LOG_LEVEL: z

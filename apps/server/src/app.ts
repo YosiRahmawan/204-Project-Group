@@ -21,6 +21,8 @@ import { createAgents, loadRegistry } from './agents.js';
 import { registerAgentRoutes } from './agent-routes.js';
 import { createCampaigns } from './campaigns.js';
 import { registerCampaignRoutes } from './campaign-routes.js';
+import { registerMemoryRoutes } from './memory.js';
+import { createVault } from './vault.js';
 
 const publicPaths = new Set(['/health', '/auth/login']);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -192,6 +194,15 @@ export function createApp(
     agents,
     registry,
     env: process.env,
+    audit,
+    announce,
+  });
+  registerMemoryRoutes(app, {
+    vault: config.OBSIDIAN_VAULT_PATH
+      ? createVault(config.OBSIDIAN_VAULT_PATH)
+      : null,
+    agents,
+    db,
     audit,
     announce,
   });

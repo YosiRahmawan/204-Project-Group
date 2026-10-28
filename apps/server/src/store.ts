@@ -11,6 +11,7 @@ import type {
 } from '@204/contracts';
 import { agentSchema } from './agents.js';
 import { campaignSchema } from './campaigns.js';
+import { memorySchema } from './memory.js';
 
 const schema = `
 CREATE TABLE IF NOT EXISTS tasks (
@@ -75,6 +76,7 @@ export function openDatabase(path: string) {
   db.exec(schema);
   db.exec(agentSchema);
   db.exec(campaignSchema);
+  db.exec(memorySchema);
   return db;
 }
 

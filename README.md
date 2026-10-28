@@ -25,6 +25,10 @@ Halaman Tim & agent kini menyimpan konfigurasi enam agent bawaan dan agent baru 
 
 Menu **AI Affiliate Studio**: campaign berisi produk, link afiliasi, hook/script, caption, hashtag, dan storyboard, disimpan di database. Semua teks bisa diedit dan disetujui Leo; mengedit setelah disetujui mengembalikan status ke Draft. Draf AI memakai agent Aeri (script, caption) dan Kuro (storyboard) lewat Anthropic dan hanya berjalan bila agent itu sudah diatur di Tim & agent (provider, model, anggaran token lebih dari 0) dan `ANTHROPIC_API_KEY` ada di server; selain itu server menolak dengan alasan yang jelas. Link tidak pernah dibuka atau di-scrape, dan tidak ada posting otomatis (unduh caption lalu posting manual). Editor video, musik, voice-over, tren, dan analytics belum ada.
 
+## Memori Obsidian
+
+Server bisa memakai vault Obsidian yang sudah ada sebagai memori (isi `OBSIDIAN_VAULT_PATH` di `.env`; vault harus sudah punya folder `.obsidian`). Struktur: `Agents/<agent>/` (memori pribadi), `Shared/`, `Strategy/`, `Campaigns/`, `Decisions/`, `Logs/`. Agent hanya menulis langsung ke folder pribadinya; perubahan ke area bersama berupa **usulan** yang harus Anda setujui (`/memory/proposals`). Penulisan atomik, ada backup di `.204-backups/`, konflik ditolak (tidak menimpa), path dibatasi di dalam vault, dan catatan yang berisi kunci/kata sandi ditolak. Pelajaran agent (`/memory/lessons`) tersimpan sebagai catatan "belum dievaluasi". Memori **tidak** otomatis dimasukkan ke prompt agent, dan Hermes belum diaktifkan.
+
 ## Pemeriksaan
 
 `corepack pnpm lint`, `typecheck`, `test`, `build`, `format:check`. Semuanya juga dijalankan GitHub Actions (`.github/workflows/ci.yml`) pada setiap push ke main dan pull request.
