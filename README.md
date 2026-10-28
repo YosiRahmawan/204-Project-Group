@@ -33,6 +33,10 @@ Server bisa memakai vault Obsidian yang sudah ada sebagai memori (isi `OBSIDIAN_
 
 Backend memanggil Hermes lewat API server resminya (OpenAI-compatible, hanya `127.0.0.1`), tidak pernah dari browser. Isi `HERMES_API_URL` dan `HERMES_API_KEY` di `.env`, jalankan `hermes -p akira gateway run` (profile `akira`: toolset dibatasi tanpa terminal/file, memori Hermes mati, tanpa Telegram). Di Tim & agent, atur Akira ke provider **Hermes** model **akira** dan beri anggaran token. Halaman **Monitoring AI** menampilkan koneksi Hermes (dicek tiap 30 detik), runtime Akira, dan riwayat eksekusi (token; biaya "tidak tersedia" karena Hermes tidak melaporkan harga). Server menolak Akira bila Hermes punya tool yang bisa bertindak. Fase 1 hanya menjawab; perencanaan dan delegasi menyusul.
 
+## Affiliate Studio: Video Studio gratis (FFmpeg lokal)
+
+Rencana Free-First lengkap (provider gratis, berkuota, berbayar) ada di [docs/AFFILIATE-FREE-FIRST.md](docs/AFFILIATE-FREE-FIRST.md). Tab **Video Studio** memakai FFmpeg di laptop: unggah foto produk/presenter/latar dan musik berlisensi, rapikan foto ke 9:16 (salinan baru), susun scene dengan subtitle, zoom, dan fade, lalu ekspor MP4 1080x1920. Semua media disimpan di `MEDIA_DIR` (drive E:), biaya Rp0, tanpa API. Butuh FFmpeg terpasang dan `MEDIA_DIR` di `.env`.
+
 ## Pemeriksaan
 
 `corepack pnpm lint`, `typecheck`, `test`, `build`, `format:check`. Semuanya juga dijalankan GitHub Actions (`.github/workflows/ci.yml`) pada setiap push ke main dan pull request.

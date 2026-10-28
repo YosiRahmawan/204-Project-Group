@@ -23,6 +23,7 @@ import { createCampaigns } from './campaigns.js';
 import { registerCampaignRoutes } from './campaign-routes.js';
 import { registerMemoryRoutes } from './memory.js';
 import { createHermes } from './hermes.js';
+import { registerMediaRoutes } from './media.js';
 import { akiraRuntime, createAkira, registerAkiraRoutes } from './akira.js';
 import { createVault } from './vault.js';
 
@@ -116,7 +117,7 @@ export function createApp(
   // Uploads arrive as raw bytes, up to the file size limit.
   app.addContentTypeParser(
     'application/octet-stream',
-    { parseAs: 'buffer', bodyLimit: maxBytes },
+    { parseAs: 'buffer', bodyLimit: 50 * 1024 * 1024 },
     (_request, body, done) => done(null, body),
   );
 
@@ -228,12 +229,22 @@ export function createApp(
     audit,
     announce,
   });
+  const campaignStore = createCampaigns(db);
   registerCampaignRoutes(app, {
-    campaigns: createCampaigns(db),
+    campaigns: campaignStore,
     agents,
     registry,
     env: process.env,
     ...(fetchImpl ? { fetchImpl } : {}),
+    audit,
+    announce,
+  });
+  registerMediaRoutes(app, {
+    db,
+    campaigns: campaignStore,
+    mediaDir: config.MEDIA_DIR,
+    ffmpeg: config.FFMPEG_PATH,
+    ffprobe: config.FFPROBE_PATH,
     audit,
     announce,
   });
@@ -333,6 +344,9 @@ export function createApp(
     const bytes = request.body;
     if (!Buffer.isBuffer(bytes) || bytes.length === 0)
       return reply.code(400).send({ error: 'File kosong.' });
+    // The upload parser allows larger bodies for media; task attachments stay at 10 MB.
+    if (bytes.length > maxBytes)
+      return reply.code(413).send({ error: 'File terlalu besar.' });
     const header = String(request.headers['x-file-name'] ?? 'file');
     let raw = header;
     try {

@@ -13,6 +13,7 @@ import { agentSchema } from './agents.js';
 import { campaignSchema } from './campaigns.js';
 import { memorySchema } from './memory.js';
 import { akiraSchema } from './akira.js';
+import { mediaSchema } from './media.js';
 
 const schema = `
 CREATE TABLE IF NOT EXISTS tasks (
@@ -79,6 +80,7 @@ export function openDatabase(path: string) {
   db.exec(campaignSchema);
   db.exec(memorySchema);
   db.exec(akiraSchema);
+  db.exec(mediaSchema);
   return db;
 }
 

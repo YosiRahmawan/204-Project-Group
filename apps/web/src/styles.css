@@ -1834,3 +1834,10 @@ a.feed-time {
     grid-template-columns: 1fr;
   }
 }
+
+.asset-thumb {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  background: #f5f4f0;
+}

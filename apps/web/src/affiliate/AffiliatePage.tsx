@@ -11,6 +11,7 @@ import {
 } from '@204/contracts';
 import { useAgents } from '../agents/store';
 import { campaignActions, useCampaigns } from './store';
+import { VideoStudio } from './VideoStudio';
 
 type Section =
   'product' | 'trend' | 'content' | 'video' | 'music' | 'library' | 'analytics';
@@ -19,7 +20,7 @@ const sections: { id: Section; label: string; ready: boolean }[] = [
   { id: 'product', label: 'Product & Affiliate Link', ready: true },
   { id: 'trend', label: 'AI Trend Analyzer', ready: false },
   { id: 'content', label: 'Content Generator', ready: true },
-  { id: 'video', label: 'Video Studio', ready: false },
+  { id: 'video', label: 'Video Studio', ready: true },
   { id: 'music', label: 'Music & Voice', ready: false },
   { id: 'library', label: 'Content Library', ready: true },
   { id: 'analytics', label: 'Analytics', ready: false },
@@ -472,9 +473,9 @@ export function AffiliatePage() {
         </button>
       </div>
       <p className="section-note">
-        Fase 1: input produk, link afiliasi, draf script, caption dan storyboard
-        yang bisa Anda edit dan setujui. Editor video, musik, voice-over, tren,
-        dan analytics belum tersedia. Posting dilakukan manual oleh Anda.
+        Input produk, link afiliasi, draf teks yang bisa Anda edit dan setujui,
+        dan Video Studio gratis berbasis FFmpeg lokal (foto ke MP4 9:16). Suara,
+        tren, dan analytics belum tersedia. Posting dilakukan manual oleh Anda.
       </p>
 
       <div
@@ -596,6 +597,16 @@ export function AffiliatePage() {
             )}
           </>
         )}
+      {status === 'ready' && section === 'video' && (
+        <>
+          {!current && (
+            <p className="section-note">
+              Pilih campaign dari Content Library untuk membuka Video Studio.
+            </p>
+          )}
+          {current && <VideoStudio key={current.id} campaign={current} />}
+        </>
+      )}
     </section>
   );
 }

@@ -35,6 +35,10 @@ const configSchema = z.object({
     )
     .optional(),
   HERMES_API_KEY: z.string().min(16).optional(),
+  // Where affiliate media (photos, music, exported videos) is kept: a folder on drive E:.
+  MEDIA_DIR: z.string().optional(),
+  FFMPEG_PATH: z.string().default('ffmpeg'),
+  FFPROBE_PATH: z.string().default('ffprobe'),
   MODEL_REGISTRY_PATH: z.string().optional(),
   SESSION_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   LOG_LEVEL: z

@@ -36,10 +36,17 @@ export const refreshers = new Set<() => void>();
 export async function request<T>(
   method: string,
   path: string,
-  options: { json?: unknown; raw?: Blob; name?: string; key?: string } = {},
+  options: {
+    json?: unknown;
+    raw?: Blob;
+    name?: string;
+    key?: string;
+    headers?: Record<string, string>;
+  } = {},
 ): Promise<Reply<T>> {
   const headers: Record<string, string> = { 'x-requested-with': '204' };
   if (options.key) headers['idempotency-key'] = options.key;
+  Object.assign(headers, options.headers);
   let body: BodyInit | undefined;
   if (options.json !== undefined) {
     headers['content-type'] = 'application/json';
