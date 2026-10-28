@@ -7,6 +7,7 @@ import { IsoOffice } from '../office/IsoOffice';
 import { ApprovalInbox, TaskBoard } from '../tasks/TaskPages';
 import { Stats } from '../tasks/StatsPanel';
 import { ActivityLog } from '../tasks/ActivityLog';
+import { AgentsPage } from '../agents/AgentsPage';
 
 export function OfficeReference() {
   const [failed, setFailed] = useState(false);
@@ -131,30 +132,7 @@ export function PageContent({
   if (page === 'tasks') return <TaskBoard />;
   if (page === 'activity') return <ActivityLog />;
   if (page === 'approvals') return <ApprovalInbox />;
-  if (page === 'team')
-    return (
-      <section className="team-page">
-        <div className="section-heading">
-          <h2>Tim 204.</h2>
-          <span className="badge">6 AI direncanakan</span>
-        </div>
-        <p className="section-note">
-          Klik profil untuk mengenal perannya. Belum ada agent yang menjalankan
-          pekerjaan.
-        </p>
-        <TeamList full onSelect={onSelect} />
-        <div className="owner-note">
-          <Face name="Leo" className="owner-avatar" />
-          <div>
-            <strong>Leo · CEO manusia</strong>
-            <p>
-              Pemilik, pemberi arahan, dan pengambil keputusan akhir. Leo bukan
-              AI Agent ketujuh.
-            </p>
-          </div>
-        </div>
-      </section>
-    );
+  if (page === 'team') return <AgentsPage />;
   if (page === 'settings')
     return (
       <section className="settings-page">

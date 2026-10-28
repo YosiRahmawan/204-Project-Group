@@ -25,10 +25,15 @@ const subscribe = (listener: () => void) => {
   return () => listeners.delete(listener);
 };
 
-type Reply<T> = { ok: true; data: T } | { ok: false; error: string };
+export type Reply<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string; fields?: Record<string, string> };
+
+// Other stores (agents) re-read their data whenever the task list is refreshed.
+export const refreshers = new Set<() => void>();
 
 // Every call goes to the server; the header lets it tell a real click from a forged request.
-async function request<T>(
+export async function request<T>(
   method: string,
   path: string,
   options: { json?: unknown; raw?: Blob; name?: string; key?: string } = {},
@@ -57,8 +62,15 @@ async function request<T>(
       return { ok: false, error: 'Masuk dulu.' };
     }
     if (!response.ok) {
-      const message = (data as { error?: string } | null)?.error;
-      return { ok: false, error: message ?? 'Permintaan ditolak server.' };
+      const body = data as {
+        error?: string;
+        fields?: Record<string, string>;
+      } | null;
+      return {
+        ok: false,
+        error: body?.error ?? 'Permintaan ditolak server.',
+        ...(body?.fields ? { fields: body.fields } : {}),
+      };
     }
     return { ok: true, data: data as T };
   } catch {
@@ -68,8 +80,10 @@ async function request<T>(
 
 async function load() {
   const reply = await request<Task[]>('GET', '/tasks');
-  if (reply.ok) publish({ phase: 'ready', tasks: reply.data });
-  else if (state.phase !== 'locked') publish({ ...state, phase: 'offline' });
+  if (reply.ok) {
+    publish({ phase: 'ready', tasks: reply.data });
+    refreshers.forEach((refresh) => refresh());
+  } else if (state.phase !== 'locked') publish({ ...state, phase: 'offline' });
 }
 
 // Runs a change, then re-reads the list so the screen shows what the server now holds.

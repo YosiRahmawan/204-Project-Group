@@ -22,6 +22,8 @@ const configSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
+  // Model registry file; the default is apps/server/models.registry.json.
+  MODEL_REGISTRY_PATH: z.string().optional(),
   SESSION_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])

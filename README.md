@@ -17,6 +17,10 @@ Web http://127.0.0.1:5173 ; health http://127.0.0.1:3001/health . Masuk dengan k
 
 Data ada di `apps/server/data/` (database `204.db` dan folder `uploads/`), diabaikan git. Hapus folder itu untuk mulai dari nol. Web memanggil server lewat proxy dev Vite `/api` ke port 3001; jika PORT diubah, sesuaikan `apps/web/vite.config.ts`. Hosting produksi belum dikonfigurasi (perlu reverse proxy `/api` dan HTTPS).
 
+## Agent (Tim & Agent)
+
+Halaman Tim & agent kini menyimpan konfigurasi enam agent bawaan dan agent baru di database (`+ Add Agent`, Edit, Aktifkan/Nonaktifkan): peran, atasan, provider/model, system prompt, izin dan alat, memori, batas sumber daya. Ini **hanya konfigurasi**: belum ada AI yang dijalankan, jadi status runtime selalu "Not Connected" ("AI execution is not configured yet."). Daftar provider/model ada di `apps/server/models.registry.json` (tambah model di sana). Kunci API hanya dari env server, tidak pernah dikirim ke browser. Persetujuan wajib (hapus data, deployment, rahasia, pesan keluar, transaksi keuangan, tulis memori bersama) selalu ditambahkan server dan tidak bisa dimatikan lewat prompt.
+
 ## Pemeriksaan
 
 `corepack pnpm lint`, `typecheck`, `test`, `build`, `format:check`. Semuanya juga dijalankan GitHub Actions (`.github/workflows/ci.yml`) pada setiap push ke main dan pull request.

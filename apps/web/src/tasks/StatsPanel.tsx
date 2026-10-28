@@ -3,6 +3,7 @@ import { actions, useTasks } from './store';
 import { ago, needsLeo, recentActivity, summarize } from './stats';
 import { agents, type Status } from '@204/contracts';
 import { team } from '../shell/team';
+import { useAgents } from '../agents/store';
 
 const statusLabel: Record<Status, string> = {
   dikirim: 'Instruksi dikirim',
@@ -130,6 +131,12 @@ function Donut({
 
 export function Stats() {
   const tasks = useTasks();
+  const registry = useAgents();
+  // Counted from the agent registry once it has loaded; until then the static team.
+  const agentCount =
+    registry.status === 'ready'
+      ? registry.agents.filter((a) => a.config.enabled).length
+      : team.length;
   const s = summarize(tasks);
   // Relative times refresh every 30 seconds.
   const [now, setNow] = useState(() => Date.now());
@@ -151,8 +158,8 @@ export function Stats() {
       </p>
       <dl className="kpis">
         <div>
-          <dt>Agent (direncanakan)</dt>
-          <dd>{team.length}</dd>
+          <dt>Agent aktif (belum terhubung ke AI)</dt>
+          <dd>{agentCount}</dd>
         </div>
         <div>
           <dt>Task aktif</dt>

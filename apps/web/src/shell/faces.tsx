@@ -26,7 +26,11 @@ export function Face({
 }) {
   return (
     <span className={`avatar ${className}`} aria-hidden="true">
-      <img src={faces[name]} alt="" width="128" height="128" />
+      {faces[name] ? (
+        <img src={faces[name]} alt="" width="128" height="128" />
+      ) : (
+        name.slice(0, 2).toUpperCase()
+      )}
     </span>
   );
 }

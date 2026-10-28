@@ -5,6 +5,7 @@ import { createReadStream, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   advance,
   createTask,
@@ -16,6 +17,8 @@ import type { Config } from './config.js';
 import { createAuth, sessionToken } from './auth.js';
 import { cleanName, sniffType } from './files.js';
 import { createStore, openDatabase } from './store.js';
+import { createAgents, loadRegistry } from './agents.js';
+import { registerAgentRoutes } from './agent-routes.js';
 
 const publicPaths = new Set(['/health', '/auth/login']);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -168,6 +171,19 @@ export function createApp(config: Config, logging = false) {
       .object({ limit: z.coerce.number().int().min(1).max(500).default(100) })
       .parse(request.query);
     return store.auditList(limit);
+  });
+
+  const agents = createAgents(db);
+  agents.seed();
+  registerAgentRoutes(app, {
+    agents,
+    registry: loadRegistry(
+      config.MODEL_REGISTRY_PATH ??
+        fileURLToPath(new URL('../models.registry.json', import.meta.url)),
+    ),
+    env: process.env,
+    audit: (action, detail) => store.audit('Leo', action, detail),
+    announce,
   });
 
   app.get('/tasks', () => store.list());

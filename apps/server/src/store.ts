@@ -9,6 +9,7 @@ import type {
   Status,
   Task,
 } from '@204/contracts';
+import { agentSchema } from './agents.js';
 
 const schema = `
 CREATE TABLE IF NOT EXISTS tasks (
@@ -71,6 +72,7 @@ export function openDatabase(path: string) {
   const db = new DatabaseSync(path);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(schema);
+  db.exec(agentSchema);
   return db;
 }
 

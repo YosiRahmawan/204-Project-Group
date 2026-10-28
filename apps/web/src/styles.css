@@ -1549,3 +1549,242 @@ a.feed-time {
   padding: 10px 12px;
   font: inherit;
 }
+
+/* Agent management */
+.agent-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+}
+.agent-counts > div {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 12px 14px;
+}
+.agent-counts dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+.agent-counts dd {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 500;
+}
+.agent-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 14px;
+}
+.agent-card.off {
+  opacity: 0.7;
+}
+.agent-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.agent-main .avatar {
+  height: 44px;
+  width: 44px;
+}
+.agent-main small {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+}
+.status-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chip {
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  background: #eeeae1;
+  color: #514638;
+}
+.chip.configured {
+  background: #dcebe2;
+  color: var(--green);
+}
+.chip.invalid,
+.chip.error {
+  background: #f3dcd8;
+  color: #8a2f22;
+}
+.chip.disabled {
+  background: #e4e2df;
+  color: #52504d;
+}
+.agent-drawer {
+  width: min(560px, 100%);
+}
+.agent-body {
+  display: flex;
+  flex-direction: column;
+}
+.tab-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.tab[aria-selected='true'] {
+  border-bottom-color: var(--gold);
+  color: var(--ink);
+  font-weight: 600;
+}
+.tab-flag {
+  margin-left: 4px;
+  color: #8a2f22;
+  font-weight: 700;
+}
+.agent-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+.field > span {
+  font-weight: 600;
+}
+.field input,
+.field select,
+.field textarea {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font: inherit;
+  background: var(--surface);
+  color: var(--ink);
+  min-width: 0;
+}
+.field input:disabled,
+.field select:disabled {
+  background: #f1efe9;
+  color: var(--muted);
+}
+.field small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.field-error {
+  color: #8a2f22 !important;
+  font-size: 11px;
+}
+.field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.prompt-input {
+  font-family: Consolas, monospace !important;
+  font-size: 12px !important;
+  line-height: 1.5;
+}
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 12px;
+}
+.check-group {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.check-group legend {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 4px;
+}
+.check-group small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.risky {
+  color: #8a2f22;
+  font-size: 10px;
+  font-style: normal;
+}
+.issue-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #8a2f22;
+}
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+}
+.history-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.drawer-h3 {
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+.drawer-footer {
+  position: sticky;
+  bottom: 0;
+  margin-top: 16px;
+  padding: 12px 0 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.drawer-message {
+  min-height: 16px;
+  font-size: 11px;
+  color: var(--muted);
+}
+@media (max-width: 520px) {
+  .field-pair {
+    grid-template-columns: 1fr;
+  }
+}
