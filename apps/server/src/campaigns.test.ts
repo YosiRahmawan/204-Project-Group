@@ -211,6 +211,7 @@ describe('AI drafts', () => {
       call('POST', `/campaigns/${c.id}/generate`, {
         version: c.version,
         kind: 'script',
+        approvePaid: true,
       });
     expect((await ask()).json().error).toMatch(/Anthropic/);
     await configureAeri(call);
@@ -240,6 +241,7 @@ describe('AI drafts', () => {
     const res = await call('POST', `/campaigns/${c.id}/generate`, {
       version: c.version,
       kind: 'script',
+      approvePaid: true,
     });
     expect(res.statusCode).toBe(200);
     const out = res.json().campaign;
@@ -273,6 +275,7 @@ describe('AI drafts', () => {
     const res = await call('POST', `/campaigns/${c.id}/generate`, {
       version: c.version,
       kind: 'storyboard',
+      approvePaid: true,
     });
     expect(res.statusCode).toBe(409);
     expect(res.json().error).toMatch(/Kuro/);
@@ -289,10 +292,24 @@ describe('AI drafts', () => {
     const res = await call('POST', `/campaigns/${c.id}/generate`, {
       version: c.version,
       kind: 'caption',
+      approvePaid: true,
     });
     expect(res.statusCode).toBe(502);
     expect(
       (await call('GET', `/campaigns/${c.id}`)).json().campaign.version,
     ).toBe(c.version);
+  });
+
+  test('refuse without Leo approving the paid call', async () => {
+    const fetchImpl = reply('{}');
+    const { call } = await session(fetchImpl as unknown as typeof fetch);
+    const c = (await call('POST', '/campaigns', { config: sample() })).json()
+      .campaign;
+    const res = await call('POST', `/campaigns/${c.id}/generate`, {
+      version: c.version,
+      kind: 'script',
+    });
+    expect(res.statusCode).toBe(400);
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 });

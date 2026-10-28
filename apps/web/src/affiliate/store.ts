@@ -55,7 +55,7 @@ export const campaignActions = {
   generate: (id: string, version: number, kind: GenerateKind) =>
     run(() =>
       request('POST', `/campaigns/${id}/generate`, {
-        json: { version, kind },
+        json: { version, kind, approvePaid: true },
       }),
     ),
   remove: (id: string) => run(() => request('DELETE', `/campaigns/${id}`)),

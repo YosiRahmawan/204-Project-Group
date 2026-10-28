@@ -1,5 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import {
+  copyFileSync,
   createReadStream,
   existsSync,
   mkdirSync,
@@ -11,6 +12,7 @@ import { randomUUID } from 'node:crypto';
 import { join, resolve } from 'node:path';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { BACKGROUND_PRESETS } from '@204/contracts';
 import type { Campaigns } from './campaigns.js';
 import { cleanName, sniffType } from './files.js';
 import {
@@ -56,7 +58,12 @@ const IMAGE_KINDS = ['product', 'presenter', 'background'] as const;
 const KINDS = [...IMAGE_KINDS, 'music'] as const;
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const AUDIO_TYPES = ['audio/mpeg', 'audio/wav'];
-const LIMITS = { image: 25 * 1024 * 1024, audio: 50 * 1024 * 1024 };
+const VIDEO_TYPES = ['video/mp4', 'video/webm'];
+const LIMITS = {
+  image: 25 * 1024 * 1024,
+  audio: 50 * 1024 * 1024,
+  video: 50 * 1024 * 1024,
+};
 const EXT: Record<string, string> = {
   'image/png': '.png',
   'image/jpeg': '.jpg',
@@ -64,6 +71,7 @@ const EXT: Record<string, string> = {
   'audio/mpeg': '.mp3',
   'audio/wav': '.wav',
   'video/mp4': '.mp4',
+  'video/webm': '.webm',
 };
 const MAX_VIDEO_SECONDS = 90;
 const RENDER_TIMEOUT_MS = 15 * 60_000;
@@ -118,6 +126,8 @@ const renderBody = z.object({
     .array(
       z.object({
         assetId: uuid,
+        backgroundAssetId: uuid.nullable().default(null),
+        trimStart: z.number().min(0).max(3600).default(0),
         seconds: z.number().int().min(1).max(15),
         text: z.string().trim().max(200).default(''),
       }),
@@ -219,6 +229,23 @@ export function registerMediaRoutes(app: FastifyInstance, deps: Deps) {
     return toAsset(assetRow(id)!);
   };
 
+  // Every exported video across campaigns, newest first, for the Content Library.
+  app.get('/media/library', () => {
+    const rows = db
+      .prepare(
+        "SELECT * FROM campaign_assets WHERE kind = 'export' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 100",
+      )
+      .all() as Row[];
+    return {
+      exports: rows.map((r) => ({
+        ...toAsset(r),
+        campaignName:
+          campaigns.get(String(r.campaign_id))?.config.name ??
+          '(campaign dihapus)',
+      })),
+    };
+  });
+
   app.get('/media/status', async () => ({
     configured: Boolean(root),
     dir: root,
@@ -270,14 +297,26 @@ export function registerMediaRoutes(app: FastifyInstance, deps: Deps) {
     const name = cleanName(raw);
     const type = sniffType(bytes, name);
     const isMusic = kind.data === 'music';
-    const allowed = isMusic ? AUDIO_TYPES : IMAGE_TYPES;
+    // Product clips are allowed next to product photos; everything else is a photo.
+    const allowed = isMusic
+      ? AUDIO_TYPES
+      : kind.data === 'product'
+        ? [...IMAGE_TYPES, ...VIDEO_TYPES]
+        : IMAGE_TYPES;
     if (!type || !allowed.includes(type))
       return reply.code(415).send({
         error: isMusic
           ? 'Musik harus MP3 atau WAV.'
-          : 'Foto harus PNG, JPG, atau WebP.',
+          : kind.data === 'product'
+            ? 'Berkas harus foto (PNG, JPG, WebP) atau video (MP4, WebM).'
+            : 'Foto harus PNG, JPG, atau WebP.',
       });
-    if (bytes.length > (isMusic ? LIMITS.audio : LIMITS.image))
+    const limit = isMusic
+      ? LIMITS.audio
+      : VIDEO_TYPES.includes(type)
+        ? LIMITS.video
+        : LIMITS.image;
+    if (bytes.length > limit)
       return reply.code(413).send({ error: 'File terlalu besar.' });
 
     const id = randomUUID();
@@ -384,6 +423,106 @@ export function registerMediaRoutes(app: FastifyInstance, deps: Deps) {
     return reply.code(201).send({ asset });
   });
 
+  // A plain gradient backdrop made locally, for campaigns with no backdrop photo of their own.
+  app.post(
+    '/campaigns/:id/assets/background-preset',
+    async (request, reply) => {
+      const campaign = campaignOr404(
+        reply,
+        (request.params as { id: string }).id,
+      );
+      if (!campaign) return reply;
+      const blocked = await notReady(reply);
+      if (blocked) return blocked;
+      const body = z
+        .object({ preset: z.string().max(40) })
+        .safeParse(request.body);
+      const preset = body.success
+        ? BACKGROUND_PRESETS.find((p) => p.id === body.data.preset)
+        : undefined;
+      if (!preset)
+        return reply.code(400).send({ error: 'Latar tidak dikenal.' });
+      const id = randomUUID();
+      const rel = `assets/${campaign.id}/${id}.jpg`;
+      folder('assets', campaign.id);
+      const out = join(root!, ...rel.split('/'));
+      const source = `gradients=s=1080x1920:c0=0x${preset.c0}:c1=0x${preset.c1}:x0=540:y0=0:x1=540:y1=1920:nb_colors=2:d=1`;
+      const result = await run(
+        deps.ffmpeg,
+        [
+          '-y',
+          '-hide_banner',
+          '-f',
+          'lavfi',
+          '-i',
+          source,
+          '-frames:v',
+          '1',
+          '-q:v',
+          '2',
+          out,
+        ],
+        { timeoutMs: 30_000 },
+      );
+      if (result.code !== 0 || !existsSync(out))
+        return reply.code(502).send({ error: 'FFmpeg gagal membuat latar.' });
+      const asset = addAsset({
+        campaignId: campaign.id,
+        kind: 'background',
+        name: preset.label,
+        file: rel,
+        mime: 'image/jpeg',
+        bytes: statSync(out).size,
+        width: 1080,
+        height: 1920,
+        seconds: null,
+      });
+      audit('asset.background', `${campaign.id} ${preset.id}`);
+      announce();
+      return reply.code(201).send({ asset });
+    },
+  );
+
+  // Copies a presenter reference photo into the campaign so it can be used as a scene.
+  app.post('/campaigns/:id/assets/from-presenter', async (request, reply) => {
+    const campaign = campaignOr404(
+      reply,
+      (request.params as { id: string }).id,
+    );
+    if (!campaign) return reply;
+    const blocked = await notReady(reply);
+    if (blocked) return blocked;
+    const body = z.object({ photoId: uuid }).safeParse(request.body);
+    const photo = body.success
+      ? (db
+          .prepare(
+            'SELECT f.* FROM presenter_photos f JOIN presenters p ON p.id = f.presenter_id WHERE f.id = ? AND f.deleted_at IS NULL AND p.deleted_at IS NULL',
+          )
+          .get(body.data.photoId) as Row | undefined)
+      : undefined;
+    const source = photo ? join(root!, ...String(photo.file).split('/')) : '';
+    if (!photo || !existsSync(source))
+      return reply.code(404).send({ error: 'Foto presenter tidak ditemukan.' });
+    const id = randomUUID();
+    const rel = `assets/${campaign.id}/${id}${EXT[String(photo.mime)] ?? '.jpg'}`;
+    folder('assets', campaign.id);
+    copyFileSync(source, join(root!, ...rel.split('/')));
+    const asset = addAsset({
+      campaignId: campaign.id,
+      kind: 'presenter',
+      name: String(photo.name),
+      file: rel,
+      mime: String(photo.mime),
+      bytes: Number(photo.bytes),
+      width: photo.width === null ? null : Number(photo.width),
+      height: photo.height === null ? null : Number(photo.height),
+      seconds: null,
+    });
+    audit('asset.from_presenter', `${campaign.id} ${String(photo.id)}`);
+    announce();
+    return reply.code(201).send({ asset });
+  });
+
   app.get('/media/:assetId/file', async (request, reply) => {
     const assetId = uuid.safeParse(
       (request.params as { assetId: string }).assetId,
@@ -435,7 +574,14 @@ export function registerMediaRoutes(app: FastifyInstance, deps: Deps) {
   async function runJob(id: string) {
     const row = jobRow(id)!;
     const plan = JSON.parse(String(row.plan)) as {
-      scenes: { path: string; seconds: number; text: string }[];
+      scenes: {
+        path: string;
+        seconds: number;
+        text: string;
+        video: boolean;
+        trimStart: number;
+        background: string | null;
+      }[];
       transition: 'none' | 'fade';
       motion: 'none' | 'zoom';
       music: string | null;
@@ -449,6 +595,9 @@ export function registerMediaRoutes(app: FastifyInstance, deps: Deps) {
       image: s.path,
       seconds: s.seconds,
       text: s.text,
+      video: s.video,
+      trimStart: s.trimStart,
+      background: s.background,
     }));
     writeFileSync(join(temp, 'subs.srt'), subtitleFile(scenes));
     const total = totalSeconds(scenes);
@@ -568,21 +717,46 @@ export function registerMediaRoutes(app: FastifyInstance, deps: Deps) {
         .code(429)
         .send({ error: 'Antrean ekspor penuh. Tunggu yang berjalan selesai.' });
 
-    const scenes: { path: string; seconds: number; text: string }[] = [];
+    const scenes: {
+      path: string;
+      seconds: number;
+      text: string;
+      video: boolean;
+      trimStart: number;
+      background: string | null;
+    }[] = [];
     for (const scene of body.data.scenes) {
       const row = assetRow(scene.assetId);
+      const mime = String(row?.mime ?? '');
       if (
         !row ||
         row.campaign_id !== campaign.id ||
-        !IMAGE_TYPES.includes(String(row.mime))
+        !(IMAGE_TYPES.includes(mime) || VIDEO_TYPES.includes(mime))
       )
         return reply.code(400).send({
-          error: 'Salah satu foto scene tidak ditemukan di campaign ini.',
+          error:
+            'Salah satu foto atau video scene tidak ditemukan di campaign ini.',
         });
+      let background: string | null = null;
+      if (scene.backgroundAssetId) {
+        const bg = assetRow(scene.backgroundAssetId);
+        if (
+          !bg ||
+          bg.campaign_id !== campaign.id ||
+          !IMAGE_TYPES.includes(String(bg.mime))
+        )
+          return reply
+            .code(400)
+            .send({ error: 'Latar scene tidak ditemukan di campaign ini.' });
+        background = fileOf(bg);
+      }
       scenes.push({
         path: fileOf(row),
         seconds: scene.seconds,
         text: scene.text,
+        video: VIDEO_TYPES.includes(mime),
+        trimStart: scene.trimStart,
+        background,
       });
     }
     let music: string | null = null;

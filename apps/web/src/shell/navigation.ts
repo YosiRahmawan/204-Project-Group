@@ -26,8 +26,8 @@ export const pages = [
   },
   {
     id: 'affiliate',
-    label: 'AI Affiliate Studio',
-    description: 'Dari produk menjadi konten yang siap Anda setujui.',
+    label: 'AI Studio',
+    description: 'Dari produk menjadi video konten yang siap Anda setujui.',
   },
   {
     id: 'memory',

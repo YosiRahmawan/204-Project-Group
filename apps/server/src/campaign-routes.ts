@@ -32,6 +32,10 @@ const versionBody = z.object({ version: z.number().int().min(1) });
 const generateBody = z.object({
   version: z.number().int().min(1),
   kind: z.enum(GENERATE_KINDS),
+  // The draft calls a paid API, so every request must carry Leo's explicit approval.
+  approvePaid: z.literal(true, {
+    error: 'Panggilan ini berbayar. Setujui biayanya dulu.',
+  }),
 });
 
 // Which agent drafts what: copy goes to Aeri, the visual plan to Kuro.

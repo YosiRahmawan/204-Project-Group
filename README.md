@@ -37,6 +37,10 @@ Backend memanggil Hermes lewat API server resminya (OpenAI-compatible, hanya `12
 
 Rencana Free-First lengkap (provider gratis, berkuota, berbayar) ada di [docs/AFFILIATE-FREE-FIRST.md](docs/AFFILIATE-FREE-FIRST.md). Tab **Video Studio** memakai FFmpeg di laptop: unggah foto produk/presenter/latar dan musik berlisensi, rapikan foto ke 9:16 (salinan baru), susun scene dengan subtitle, zoom, dan fade, lalu ekspor MP4 1080x1920. Semua media disimpan di `MEDIA_DIR` (drive E:), biaya Rp0, tanpa API. Butuh FFmpeg terpasang dan `MEDIA_DIR` di `.env`.
 
+## AI Studio (menu baru, menggantikan nama AI Affiliate Studio)
+
+Satu campaign = satu proyek video. Modul: **AI Presenter Studio** (profil presenter dengan foto referensi dan pernyataan izin wajah, dipakai ulang antar campaign), **Product Studio** (data produk, link afiliasi, foto/video produk, latar polos buatan FFmpeg atau unggahan), **Storyboard & Template** (6 template, durasi 10-60 dtk, gaya video, scene yang bisa diedit, kerangka dari template **bukan AI**, saran hashtag dari kata produk), **Suara AI** (pilihan 30 suara Gemini dan gaya bicara, edit narasi per scene; pratinjau dan pembuatan suara belum aktif), **Edit & Ekspor Video** (scene, trim klip, latar per scene, subtitle, musik, transisi, MP4 9:16 lewat FFmpeg lokal), dan **Content Library**. Draf teks AI (Anthropic) tetap ada tetapi berbayar dan butuh persetujuan setiap kali. Belum ada: presenter berbicara, wajah konsisten dari AI, video AI, gambar AI, suara AI, dan auto post.
+
 ## Pemeriksaan
 
 `corepack pnpm lint`, `typecheck`, `test`, `build`, `format:check`. Semuanya juga dijalankan GitHub Actions (`.github/workflows/ci.yml`) pada setiap push ke main dan pull request.

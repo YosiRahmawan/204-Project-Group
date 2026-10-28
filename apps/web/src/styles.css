@@ -1841,3 +1841,42 @@ a.feed-time {
   object-fit: contain;
   background: #f5f4f0;
 }
+
+/* AI Studio */
+.timeline {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.timeline li.off {
+  opacity: 0.55;
+}
+.voice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 12px;
+}
+.photo-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+.photo-strip figure {
+  margin: 0;
+}
+.preview-9-16 {
+  max-width: 270px;
+  max-height: 480px;
+}
+.scene select {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12px;
+  background: var(--surface);
+  min-width: 0;
+}

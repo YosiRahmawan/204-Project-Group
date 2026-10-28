@@ -25,10 +25,58 @@ const webLink = z
     }
   }, 'Harus berupa link http atau https');
 
+// One scene of the storyboard, which is also the video timeline: the photo or clip it shows,
+// an optional backdrop behind it, the on-screen text, and the narration line for later.
 export const sceneSchema = z.object({
   visual: z.string().trim().max(500),
   voiceover: z.string().trim().max(500),
   seconds: z.number().int().min(1).max(120),
+  text: z.string().trim().max(200).default(''),
+  assetId: z.string().uuid().nullable().default(null),
+  backgroundAssetId: z.string().uuid().nullable().default(null),
+  trimStart: z.number().min(0).max(3600).default(0),
+});
+
+export const studioSchema = z.object({
+  presenterId: z.string().uuid().nullable().default(null),
+  backgroundAssetId: z.string().uuid().nullable().default(null),
+  durationSeconds: z
+    .union([
+      z.literal(10),
+      z.literal(15),
+      z.literal(20),
+      z.literal(30),
+      z.literal(45),
+      z.literal(60),
+    ])
+    .default(30),
+  ratio: z.literal('9:16').default('9:16'),
+  style: z
+    .enum([
+      'promo',
+      'storytelling',
+      'review',
+      'demo',
+      'problem-solution',
+      'ugc',
+      'soft-sell',
+    ])
+    .default('promo'),
+  template: z
+    .enum([
+      'affiliate-promo',
+      'review-jujur',
+      'problem-solution',
+      'before-after',
+      'demo',
+      'ugc',
+    ])
+    .default('affiliate-promo'),
+  angle: z.string().trim().max(200).default(''),
+  voiceId: z.string().max(40).nullable().default(null),
+  voiceStyle: z
+    .enum(['santai', 'energik', 'tenang', 'profesional'])
+    .default('santai'),
 });
 
 export const campaignInputSchema = z.object({
@@ -43,6 +91,7 @@ export const campaignInputSchema = z.object({
     notes: z.string().trim().max(1500),
   }),
   affiliateLink: webLink,
+  studio: studioSchema.default(() => studioSchema.parse({})),
   content: z.object({
     hooks: z.array(z.string().trim().max(300)).max(10),
     script: z.string().trim().max(4000),
@@ -84,6 +133,7 @@ export const emptyCampaign = (): CampaignInput => ({
     notes: '',
   },
   affiliateLink: '',
+  studio: studioSchema.parse({}),
   content: {
     hooks: [],
     script: '',

@@ -24,6 +24,7 @@ import { registerCampaignRoutes } from './campaign-routes.js';
 import { registerMemoryRoutes } from './memory.js';
 import { createHermes } from './hermes.js';
 import { registerMediaRoutes } from './media.js';
+import { registerPresenterRoutes } from './presenters.js';
 import { akiraRuntime, createAkira, registerAkiraRoutes } from './akira.js';
 import { createVault } from './vault.js';
 
@@ -236,6 +237,13 @@ export function createApp(
     registry,
     env: process.env,
     ...(fetchImpl ? { fetchImpl } : {}),
+    audit,
+    announce,
+  });
+  registerPresenterRoutes(app, {
+    db,
+    mediaDir: config.MEDIA_DIR,
+    ffprobe: config.FFPROBE_PATH,
     audit,
     announce,
   });

@@ -54,7 +54,16 @@ export function fitArgs(
   ];
 }
 
-export type Scene = { image: string; seconds: number; text: string };
+export type Scene = {
+  // A photo, or a video clip when `video` is true (then it is cut from `trimStart`).
+  image: string;
+  seconds: number;
+  text: string;
+  video?: boolean;
+  trimStart?: number;
+  // A backdrop photo; the scene image is then shown inside it instead of filling the frame.
+  background?: string | null;
+};
 export type RenderPlan = {
   scenes: Scene[];
   transition: 'none' | 'fade';
@@ -96,34 +105,63 @@ export function renderArgs(plan: RenderPlan): string[] {
   const { scenes } = plan;
   const total = totalSeconds(scenes);
   const args = ['-y', '-hide_banner', '-nostats', '-progress', 'pipe:1'];
-  for (const scene of scenes)
-    args.push(
-      '-loop',
-      '1',
-      '-framerate',
-      String(FPS),
-      '-t',
-      String(scene.seconds),
-      '-i',
-      scene.image,
-    );
-  // The music input comes after the scene inputs, so its index is the scene count.
-  if (plan.music) args.push('-i', plan.music);
+  let next = 0;
+  // Adds one input and returns its index; stills loop for the scene length, clips are cut.
+  const input = (path: string, scene: Scene, clip: boolean) => {
+    if (clip)
+      args.push(
+        '-ss',
+        String(scene.trimStart ?? 0),
+        '-t',
+        String(scene.seconds),
+        '-i',
+        path,
+      );
+    else
+      args.push(
+        '-loop',
+        '1',
+        '-framerate',
+        String(FPS),
+        '-t',
+        String(scene.seconds),
+        '-i',
+        path,
+      );
+    return next++;
+  };
 
   const parts: string[] = [];
   scenes.forEach((scene, i) => {
+    const bg = scene.background ? input(scene.background, scene, false) : null;
+    const fg = input(scene.image, scene, Boolean(scene.video));
+    // A clip is held on its last frame if it is shorter than the scene, then cut to length.
+    const prep = scene.video
+      ? `fps=${FPS},tpad=stop_mode=clone:stop_duration=${scene.seconds},trim=duration=${scene.seconds},setpts=PTS-STARTPTS,`
+      : '';
+    if (bg !== null) {
+      parts.push(
+        `[${bg}:v]scale=${WIDTH}:${HEIGHT}:force_original_aspect_ratio=increase,crop=${WIDTH}:${HEIGHT},setsar=1[b${i}]`,
+      );
+      parts.push(
+        `[${fg}:v]${prep}scale=${WIDTH - 160}:${HEIGHT - 620}:force_original_aspect_ratio=decrease,setsar=1[f${i}]`,
+      );
+      parts.push(`[b${i}][f${i}]overlay=(W-w)/2:(H-h)/2[c${i}]`);
+    } else {
+      parts.push(
+        `[${fg}:v]${prep}scale=${WIDTH}:${HEIGHT}:force_original_aspect_ratio=increase,crop=${WIDTH}:${HEIGHT},setsar=1[c${i}]`,
+      );
+    }
     // The zoom works on a larger copy so it moves smoothly instead of jumping pixel by pixel.
     const motion =
-      plan.motion === 'zoom'
+      plan.motion === 'zoom' && !scene.video
         ? `scale=${(WIDTH * 3) / 2}:${(HEIGHT * 3) / 2},zoompan=z='min(zoom+0.0008,1.12)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${WIDTH}x${HEIGHT}:fps=${FPS},`
         : '';
     const fade =
       plan.transition === 'fade'
         ? `,fade=t=in:st=0:d=0.3,fade=t=out:st=${Math.max(0, scene.seconds - 0.3)}:d=0.3`
         : '';
-    parts.push(
-      `[${i}:v]scale=${WIDTH}:${HEIGHT}:force_original_aspect_ratio=increase,crop=${WIDTH}:${HEIGHT},setsar=1,${motion}format=yuv420p${fade}[v${i}]`,
-    );
+    parts.push(`[c${i}]${motion}format=yuv420p${fade}[v${i}]`);
   });
   parts.push(
     `${scenes.map((_, i) => `[v${i}]`).join('')}concat=n=${scenes.length}:v=1:a=0[joined]`,
@@ -136,11 +174,15 @@ export function renderArgs(plan: RenderPlan): string[] {
       ? `[joined]subtitles=${plan.subtitles}:${style}[vout]`
       : '[joined]null[vout]',
   );
-  // Music is padded or cut to the video length and fades out in the last second.
-  if (plan.music)
+
+  // The music input comes after every scene input.
+  if (plan.music) {
+    args.push('-i', plan.music);
+    // Music is padded or cut to the video length and fades out in the last second.
     parts.push(
-      `[${scenes.length}:a]apad,atrim=0:${total},afade=t=out:st=${Math.max(0, total - 1)}:d=1[aout]`,
+      `[${next}:a]apad,atrim=0:${total},afade=t=out:st=${Math.max(0, total - 1)}:d=1[aout]`,
     );
+  }
 
   args.push('-filter_complex', parts.join(';'), '-map', '[vout]');
   if (plan.music) args.push('-map', '[aout]');
