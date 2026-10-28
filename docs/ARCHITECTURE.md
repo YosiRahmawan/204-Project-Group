@@ -1,6 +1,6 @@
 # Arsitektur — 204. PROJECT GROUP
 
-Status (28 Oktober 2026): fondasi backend sudah ada. Server Fastify memegang login Leo, API task (buat, langkah, keputusan), unggah file, dan penyimpanan SQLite. Aturan workflow ada di `packages/contracts` dan dipakai server dan web. Belum ada: WebSocket/realtime, agent nyata (Hermes), integrasi Obsidian dan platform eksternal. Versi yang benar-benar terpasang dibaca dari package.json dan pnpm-lock.yaml.
+Status (28 Oktober 2026): fondasi backend sudah ada. Server Fastify memegang login Leo, API task (buat, langkah, keputusan), unggah file, dan penyimpanan SQLite. Aturan workflow ada di `packages/contracts` dan dipakai server dan web. Realtime memakai Server-Sent Events (`GET /events`, server memberi tahu bahwa data berubah dan browser membaca ulang daftar); tabel audit permanen, sesi di database, dan kunci idempotensi sudah ada. Belum ada: agent nyata (Hermes), integrasi Obsidian dan platform eksternal. Versi yang benar-benar terpasang dibaca dari package.json dan pnpm-lock.yaml.
 
 ## Keputusan teknologi
 

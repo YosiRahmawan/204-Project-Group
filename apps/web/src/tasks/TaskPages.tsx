@@ -56,13 +56,28 @@ function Message({ text }: { text: string | null }) {
   ) : null;
 }
 
-function StepButton({ number }: { number: number }) {
+// Runs a server action and keeps the button disabled until it has answered.
+function usePending() {
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const run = (work: () => Promise<string | null>) => {
+    setPending(true);
+    void work().then((problem) => {
+      setError(problem);
+      setPending(false);
+    });
+  };
+  return { pending, error, run };
+}
+
+function StepButton({ number, from }: { number: number; from: Status }) {
+  const { pending, error, run } = usePending();
   return (
     <>
       <button
         className="button"
-        onClick={() => void actions.advance(number).then(setError)}
+        disabled={pending}
+        onClick={() => run(() => actions.advance(number, from))}
       >
         Langkah berikutnya (simulasi)
       </button>
@@ -198,6 +213,7 @@ export function TaskBoard() {
   const [text, setText] = useState('');
   const [files, setFiles] = useState<Attachment[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   return (
     <section className="task-page">
       <div className="section-heading">
@@ -213,7 +229,10 @@ export function TaskBoard() {
         className="task-form"
         onSubmit={(event) => {
           event.preventDefault();
+          if (sending) return;
+          setSending(true);
           void actions.create(text, files).then((problem) => {
+            setSending(false);
             setError(problem);
             if (!problem) {
               setText('');
@@ -235,7 +254,7 @@ export function TaskBoard() {
           setItems={setFiles}
           setProblem={setError}
         />
-        <button className="button button-dark" type="submit">
+        <button className="button button-dark" type="submit" disabled={sending}>
           Kirim instruksi (simulasi)
         </button>
         <Message text={error} />
@@ -287,7 +306,12 @@ export function TaskBoard() {
                             Putuskan →
                           </a>
                         ) : (
-                          !finished(task) && <StepButton number={task.number} />
+                          !finished(task) && (
+                            <StepButton
+                              number={task.number}
+                              from={task.status}
+                            />
+                          )
                         )}
                         <History task={task} />
                       </li>
@@ -305,11 +329,9 @@ export function TaskBoard() {
 
 function Decide({ task }: { task: Task }) {
   const [reason, setReason] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const { pending, error, run: act } = usePending();
   const run = (decision: Decision) =>
-    void actions
-      .decide(task.number, decision, task.version, reason)
-      .then(setError);
+    act(() => actions.decide(task.number, decision, task.version, reason));
   return (
     <div className="task-decide">
       <label htmlFor={`reason-${task.id}`}>
@@ -321,13 +343,25 @@ function Decide({ task }: { task: Task }) {
         onChange={(event) => setReason(event.target.value)}
       />
       <div className="task-actions">
-        <button className="button button-dark" onClick={() => run('approve')}>
+        <button
+          className="button button-dark"
+          disabled={pending}
+          onClick={() => run('approve')}
+        >
           Setujui hasil v{task.version}
         </button>
-        <button className="button" onClick={() => run('revise')}>
+        <button
+          className="button"
+          disabled={pending}
+          onClick={() => run('revise')}
+        >
           Minta revisi
         </button>
-        <button className="button" onClick={() => run('reject')}>
+        <button
+          className="button"
+          disabled={pending}
+          onClick={() => run('reject')}
+        >
           Tolak
         </button>
       </div>

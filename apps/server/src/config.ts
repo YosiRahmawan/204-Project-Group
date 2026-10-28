@@ -17,6 +17,11 @@ const configSchema = z.object({
   // Relative paths are resolved from the folder the server is started in.
   DATABASE_PATH: z.string().default('data/204.db'),
   UPLOAD_DIR: z.string().default('data/uploads'),
+  // Set to true only behind a reverse proxy you control; the client address then comes from it.
+  TRUST_PROXY: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   SESSION_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])

@@ -34,10 +34,44 @@ function frame(zone: Zone | null) {
   };
 }
 
+// The name tag that follows the pointer. It keeps the pointer position to itself, so moving the
+// mouse redraws only this small tag and not the whole map.
+function ZoneTip({
+  stage,
+  zone,
+}: {
+  stage: React.RefObject<HTMLDivElement | null>;
+  zone: Zone | null;
+}) {
+  const [at, setAt] = useState({ x: 0, y: 0 });
+  useEffect(() => {
+    const area = stage.current;
+    if (!area) return;
+    const move = (event: MouseEvent) => {
+      const box = area.getBoundingClientRect();
+      setAt({
+        x: event.clientX - box.left + 15,
+        y: event.clientY - box.top + 15,
+      });
+    };
+    area.addEventListener('mousemove', move);
+    return () => area.removeEventListener('mousemove', move);
+  }, [stage]);
+  return (
+    <div
+      className="absolute pointer-events-none z-30 bg-slate-900/90 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-xl flex items-center space-x-2 border border-slate-700"
+      style={{ left: at.x, top: at.y, visibility: zone ? 'visible' : 'hidden' }}
+      aria-hidden="true"
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+      <span>{zone ? `${zone.tag} • ${zone.name}` : ''}</span>
+    </div>
+  );
+}
+
 export function IsoOffice() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
-  const [tip, setTip] = useState({ x: 0, y: 0 });
   const tasks = useTasks();
   const view = frame(zones.find((z) => z.id === activeId) ?? null);
   const stage = useRef<HTMLDivElement>(null);
@@ -125,13 +159,6 @@ export function IsoOffice() {
       <div
         ref={stage}
         className="iso-stage relative w-full aspect-[16/9] bg-white select-none overflow-hidden"
-        onMouseMove={(event) => {
-          const area = event.currentTarget.getBoundingClientRect();
-          setTip({
-            x: event.clientX - area.left + 15,
-            y: event.clientY - area.top + 15,
-          });
-        }}
       >
         <div
           ref={wrapper}
@@ -515,18 +542,7 @@ export function IsoOffice() {
           ))}
         </ul>
 
-        <div
-          className="absolute pointer-events-none z-30 bg-slate-900/90 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-xl flex items-center space-x-2 border border-slate-700"
-          style={{
-            left: tip.x,
-            top: tip.y,
-            visibility: hover ? 'visible' : 'hidden',
-          }}
-          aria-hidden="true"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-          <span>{hover ? `${hover.tag} • ${hover.name}` : ''}</span>
-        </div>
+        <ZoneTip stage={stage} zone={hover} />
       </div>
 
       <div className="zone-grid" role="group" aria-label="Fokus area kantor">

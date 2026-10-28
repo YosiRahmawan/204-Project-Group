@@ -6,6 +6,15 @@ type Phase = 'loading' | 'locked' | 'ready' | 'offline';
 type State = { phase: Phase; tasks: Task[] };
 
 let state: State = { phase: 'loading', tasks: [] };
+let createKey = crypto.randomUUID();
+let source: EventSource | null = null;
+export type AuditEntry = {
+  id: number;
+  at: number;
+  actor: string;
+  action: string;
+  detail: string;
+};
 const listeners = new Set<() => void>();
 const publish = (next: State) => {
   state = next;
@@ -22,9 +31,10 @@ type Reply<T> = { ok: true; data: T } | { ok: false; error: string };
 async function request<T>(
   method: string,
   path: string,
-  options: { json?: unknown; raw?: Blob; name?: string } = {},
+  options: { json?: unknown; raw?: Blob; name?: string; key?: string } = {},
 ): Promise<Reply<T>> {
   const headers: Record<string, string> = { 'x-requested-with': '204' };
+  if (options.key) headers['idempotency-key'] = options.key;
   let body: BodyInit | undefined;
   if (options.json !== undefined) {
     headers['content-type'] = 'application/json';
@@ -71,25 +81,46 @@ async function change(
   return reply.ok ? null : reply.error;
 }
 
+// Opens the live stream once; the browser reconnects by itself, and every (re)connection
+// reloads the list in case something changed meanwhile.
+function connect() {
+  if (source && source.readyState !== EventSource.CLOSED) return;
+  source = new EventSource('/api/events');
+  source.addEventListener('changed', () => void load());
+  source.onopen = () => void load();
+  source.onerror = () => {
+    if (source?.readyState === EventSource.CLOSED) source = null;
+  };
+}
+
 // Each action returns an error message, or null on success.
 export const actions = {
-  // Loads now and keeps the list fresh while the tab is visible.
+  // Loads now, then keeps the list fresh: the server announces every change on an event stream.
   start() {
     void load();
-    const timer = window.setInterval(() => {
+    connect();
+    const visible = () => {
       if (document.visibilityState === 'visible' && state.phase !== 'locked')
         void load();
-    }, 15_000);
-    return () => window.clearInterval(timer);
+    };
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      source?.close();
+      source = null;
+      document.removeEventListener('visibilitychange', visible);
+    };
   },
   async login(password: string): Promise<string | null> {
     const reply = await request('POST', '/auth/login', { json: { password } });
     if (!reply.ok) return reply.error;
     await load();
+    connect();
     return null;
   },
   async logout() {
     await request('POST', '/auth/logout');
+    source?.close();
+    source = null;
     publish({ phase: 'locked', tasks: [] });
   },
   async upload(
@@ -103,20 +134,32 @@ export const actions = {
       ? { attachment: reply.data }
       : { error: `${file.name}: ${reply.error}` };
   },
-  create: (instruction: string, attachments: Attachment[] = []) =>
-    change(() =>
+  // One key per attempt: a double submit or a retry gets the first answer, not a second task.
+  async create(instruction: string, attachments: Attachment[] = []) {
+    const problem = await change(() =>
       request('POST', '/tasks', {
+        key: createKey,
         json: { instruction, fileIds: attachments.map((a) => a.id) },
       }),
+    );
+    if (!problem) createKey = crypto.randomUUID();
+    return problem;
+  },
+  // `from` is the stage on screen, so a second click on the same button is refused.
+  advance: (number: number, from: string) =>
+    change(() =>
+      request('POST', `/tasks/${number}/advance`, { json: { from } }),
     ),
-  advance: (number: number) =>
-    change(() => request('POST', `/tasks/${number}/advance`)),
   decide: (number: number, decision: Decision, version: number, reason = '') =>
     change(() =>
       request('POST', `/tasks/${number}/decision`, {
         json: { decision, version, reason },
       }),
     ),
+  async audit(): Promise<AuditEntry[]> {
+    const reply = await request<AuditEntry[]>('GET', '/audit?limit=200');
+    return reply.ok ? reply.data : [];
+  },
   // Sample data and a reset, so the statistics can be tried out and cleared again.
   seed: () => change(() => request('POST', '/tasks/demo')),
   clear: () => change(() => request('DELETE', '/tasks')),

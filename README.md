@@ -33,7 +33,7 @@ Data ada di `apps/server/data/` (database `204.db` dan folder `uploads/`), diaba
 
 ## Keamanan singkat
 
-Satu pemilik, satu kata sandi; sesi disimpan di memori server (restart = masuk lagi). Cookie `HttpOnly` dan `SameSite=Strict`; perubahan data wajib membawa header `x-requested-with`; lima kata sandi salah membuka kunci satu menit. File yang diunggah dicek dari isinya (bukan nama atau tipe kiriman browser), disimpan di luar folder web, dan hanya foto yang ditampilkan langsung. Belum ada HTTPS, pencatatan audit permanen, atau pembatasan biaya AI; semuanya perlu sebelum dipublikasikan.
+Satu pemilik, satu kata sandi. Sesi disimpan di database (hanya hash tokennya), jadi restart server tidak mengeluarkan Leo. Cookie `HttpOnly` dan `SameSite=Strict`; perubahan data wajib membawa header `x-requested-with`; lima kata sandi salah membuka kunci satu menit per alamat. Tiap jawaban membawa header pengaman. File yang diunggah dicek dari isinya, disimpan di luar folder web, dan hanya foto yang ditampilkan langsung. Setiap login, langkah task, dan unggahan dicatat permanen di tabel audit (lihat Riwayat & log, tab "Catatan audit server"). Klik ganda dan percobaan ulang tidak menggandakan task atau langkah. Perubahan muncul langsung di semua tab lewat aliran peristiwa (SSE). Untuk HTTPS, lihat [docs/DEPLOY.md](docs/DEPLOY.md). Belum ada pembatasan biaya AI atau pengguna lain.
 
 ## Standar kerja
 

@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --env-file-if-exists=../../.env src/index.ts",
+    "dev": "tsx watch --disable-warning=ExperimentalWarning --env-file-if-exists=../../.env src/index.ts",
     "build": "tsc --noEmit",
     "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=../../.env --import tsx src/index.ts",
     "lint": "eslint . --max-warnings 0",

@@ -34,7 +34,35 @@ CREATE TABLE IF NOT EXISTS files (
   task_number INTEGER REFERENCES tasks(number) ON DELETE SET NULL,
   created_at INTEGER NOT NULL
 );
+-- Append-only: nothing in the app deletes from this table.
+CREATE TABLE IF NOT EXISTS audit (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at INTEGER NOT NULL,
+  actor TEXT NOT NULL,
+  action TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT ''
+);
+-- Only a hash of each session token is kept, so a copy of the database cannot be used to log in.
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash TEXT PRIMARY KEY,
+  expires_at INTEGER NOT NULL
+);
+-- Answers already given to a request that carried an idempotency key.
+CREATE TABLE IF NOT EXISTS replies (
+  key TEXT PRIMARY KEY,
+  status INTEGER NOT NULL,
+  body TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
 `;
+
+export type AuditEntry = {
+  id: number;
+  at: number;
+  actor: string;
+  action: string;
+  detail: string;
+};
 
 type Row = Record<string, string | number | null>;
 
@@ -248,6 +276,65 @@ export function createStore(db: DatabaseSync) {
     file(id: string): Attachment | null {
       const row = fileById.get(id) as Row | undefined;
       return row ? toAttachment(row) : null;
+    },
+
+    audit(actor: string, action: string, detail = '') {
+      db.prepare(
+        'INSERT INTO audit (at, actor, action, detail) VALUES (?, ?, ?, ?)',
+      ).run(Date.now(), actor, action, detail);
+    },
+    auditList(limit: number): AuditEntry[] {
+      return (
+        db
+          .prepare('SELECT * FROM audit ORDER BY id DESC LIMIT ?')
+          .all(limit) as Row[]
+      ).map((r) => ({
+        id: Number(r.id),
+        at: Number(r.at),
+        actor: String(r.actor),
+        action: String(r.action),
+        detail: String(r.detail),
+      }));
+    },
+
+    sessions: {
+      put(hash: string, expiresAt: number) {
+        db.prepare(
+          'INSERT OR REPLACE INTO sessions (token_hash, expires_at) VALUES (?, ?)',
+        ).run(hash, expiresAt);
+      },
+      expiry(hash: string): number | undefined {
+        const row = db
+          .prepare('SELECT expires_at FROM sessions WHERE token_hash = ?')
+          .get(hash) as Row | undefined;
+        return row ? Number(row.expires_at) : undefined;
+      },
+      remove(hash: string) {
+        db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(hash);
+      },
+      purge(now: number) {
+        db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(now);
+      },
+    },
+
+    // A repeated request with the same key gets the first answer instead of running again.
+    replies: {
+      get(key: string): { status: number; body: string } | null {
+        const row = db
+          .prepare('SELECT status, body FROM replies WHERE key = ?')
+          .get(key) as Row | undefined;
+        return row
+          ? { status: Number(row.status), body: String(row.body) }
+          : null;
+      },
+      put(key: string, status: number, body: string) {
+        db.prepare(
+          'INSERT OR IGNORE INTO replies (key, status, body, created_at) VALUES (?, ?, ?, ?)',
+        ).run(key, status, body, Date.now());
+      },
+      purge(olderThan: number) {
+        db.prepare('DELETE FROM replies WHERE created_at < ?').run(olderThan);
+      },
     },
 
     // Files that were uploaded but never attached to a task.

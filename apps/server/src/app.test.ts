@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { afterEach, describe, expect, test } from 'vitest';
 import { createApp } from './app.js';
 import { parseConfig } from './config.js';
@@ -11,13 +12,17 @@ const dirs: string[] = [];
 const apps: ReturnType<typeof createApp>[] = [];
 
 // A fresh app with its own folder; pass the same folder again to "restart" the server.
-function start(folder = mkdtempSync(join(tmpdir(), 'office-'))) {
+function start(
+  folder = mkdtempSync(join(tmpdir(), 'office-')),
+  extra: Record<string, string> = {},
+) {
   if (!dirs.includes(folder)) dirs.push(folder);
   const app = createApp(
     parseConfig({
       OWNER_PASSWORD: password,
       DATABASE_PATH: join(folder, 'office.db'),
       UPLOAD_DIR: join(folder, 'uploads'),
+      ...extra,
     }),
   );
   apps.push(app);
@@ -343,5 +348,162 @@ describe('files', () => {
     ).toBe(400);
     const huge = Buffer.concat([png, Buffer.alloc(10 * 1024 * 1024)]);
     expect((await upload(app, cookie, huge, 'besar.png')).statusCode).toBe(413);
+  });
+});
+
+describe('sessions', () => {
+  test('a login survives a server restart, and only a hash of the token is stored', async () => {
+    const first = start();
+    const cookie = await login(first.app);
+    await first.app.close();
+    const second = start(first.folder);
+    expect((await call(second.app, cookie, 'GET', '/auth/me')).statusCode).toBe(
+      200,
+    );
+    const check = new DatabaseSync(join(first.folder, 'office.db'));
+    const stored = check.prepare('SELECT token_hash FROM sessions').all() as {
+      token_hash: string;
+    }[];
+    check.close();
+    expect(stored).toHaveLength(1);
+    expect(cookie).not.toContain(stored[0]!.token_hash);
+    expect(stored[0]!.token_hash).toHaveLength(64);
+  });
+});
+
+describe('audit trail', () => {
+  test('logins, task steps and uploads are recorded, newest first, and survive clearing tasks', async () => {
+    const { app } = start();
+    await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      headers: mutating,
+      payload: { password: 'wrong-password-123' },
+    });
+    const cookie = await login(app);
+    await call(app, cookie, 'POST', '/tasks', { instruction: 'Satu' });
+    await call(app, cookie, 'POST', '/tasks/1/advance');
+    await call(app, cookie, 'DELETE', '/tasks');
+    const entries = (await call(app, cookie, 'GET', '/audit')).json() as {
+      action: string;
+      detail: string;
+      actor: string;
+    }[];
+    expect(entries.map((e) => e.action)).toEqual([
+      'tasks.clear',
+      'task.advance',
+      'task.create',
+      'login.ok',
+      'login.bad',
+    ]);
+    expect(entries[1]).toMatchObject({
+      actor: 'Leo',
+      detail: 'T-001 analisis',
+    });
+    expect(entries.at(-1)!.actor).toBe('anonim');
+  });
+});
+
+describe('double clicks and retries', () => {
+  test('the same idempotency key creates one task and repeats the first answer', async () => {
+    const { app } = start();
+    const cookie = await login(app);
+    const send = () =>
+      app.inject({
+        method: 'POST',
+        url: '/tasks',
+        headers: { cookie, ...mutating, 'idempotency-key': 'klik-ganda-0001' },
+        payload: { instruction: 'Sekali saja' },
+      });
+    const [a, b] = [await send(), await send()];
+    expect(a.statusCode).toBe(201);
+    expect(b.statusCode).toBe(201);
+    expect(b.json()).toEqual(a.json());
+    expect((await call(app, cookie, 'GET', '/tasks')).json()).toHaveLength(1);
+  });
+
+  test('a second advance from the same stage is a conflict, so one click means one step', async () => {
+    const { app } = start();
+    const cookie = await login(app);
+    await call(app, cookie, 'POST', '/tasks', { instruction: 'Satu' });
+    const first = await call(app, cookie, 'POST', '/tasks/1/advance', {
+      from: 'dikirim',
+    });
+    const second = await call(app, cookie, 'POST', '/tasks/1/advance', {
+      from: 'dikirim',
+    });
+    expect(first.json().status).toBe('analisis');
+    expect(second.statusCode).toBe(409);
+    expect(
+      (await call(app, cookie, 'GET', '/tasks')).json()[0].history,
+    ).toHaveLength(2);
+  });
+});
+
+describe('live updates', () => {
+  test('an open event stream is told when a task changes', async () => {
+    const { app } = start();
+    const cookie = await login(app);
+    await app.listen({ port: 0, host: '127.0.0.1' });
+    const base = `http://127.0.0.1:${(app.server.address() as { port: number }).port}`;
+    const stop = new AbortController();
+    const stream = await fetch(`${base}/events`, {
+      headers: { cookie },
+      signal: stop.signal,
+    });
+    expect(stream.headers.get('content-type')).toBe('text/event-stream');
+    const reader = stream.body!.getReader();
+    const read = async () =>
+      new TextDecoder().decode((await reader.read()).value);
+    expect(await read()).toContain('retry');
+    await fetch(`${base}/tasks`, {
+      method: 'POST',
+      headers: { cookie, ...mutating, 'content-type': 'application/json' },
+      body: JSON.stringify({ instruction: 'Ada kabar baru' }),
+    });
+    expect(await read()).toContain('event: changed');
+    stop.abort();
+  });
+
+  test('the stream needs a login', async () => {
+    const { app } = start();
+    expect((await app.inject({ url: '/events' })).statusCode).toBe(401);
+  });
+});
+
+describe('transport', () => {
+  test('every answer carries security headers; HSTS and secure cookies only for an https origin', async () => {
+    const plain = start();
+    const health = await plain.app.inject({ url: '/health' });
+    expect(health.headers['x-content-type-options']).toBe('nosniff');
+    expect(health.headers['x-frame-options']).toBe('DENY');
+    expect(health.headers['strict-transport-security']).toBeUndefined();
+    const secure = start(undefined, { WEB_ORIGIN: 'https://kantor.example' });
+    expect(
+      (await secure.app.inject({ url: '/health' })).headers[
+        'strict-transport-security'
+      ],
+    ).toMatch(/max-age/);
+    const response = await secure.app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      headers: mutating,
+      payload: { password },
+    });
+    expect(String(response.headers['set-cookie'])).toMatch(/Secure/);
+  });
+
+  test('behind a trusted proxy each client address has its own login limit', async () => {
+    const { app } = start(undefined, { TRUST_PROXY: 'true' });
+    const attempt = (address: string, pw: string) =>
+      app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        headers: { ...mutating, 'x-forwarded-for': address },
+        payload: { password: pw },
+      });
+    for (let i = 0; i < 5; i++) await attempt('10.0.0.1', 'wrong-password-123');
+    expect((await attempt('10.0.0.1', password)).statusCode).toBe(429);
+    expect((await attempt('10.0.0.2', password)).statusCode).toBe(200);
   });
 });
