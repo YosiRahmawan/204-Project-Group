@@ -30,6 +30,11 @@ export const pages = [
     description: 'Dari produk menjadi konten yang siap Anda setujui.',
   },
   {
+    id: 'memory',
+    label: 'Memori Obsidian',
+    description: 'Pengetahuan tim, dengan persetujuan Anda.',
+  },
+  {
     id: 'monitoring',
     label: 'Monitoring AI',
     description: 'Visibilitas atas eksekusi dan biaya AI.',

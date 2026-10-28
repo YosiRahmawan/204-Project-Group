@@ -381,4 +381,24 @@ describe('memory API', () => {
     expect(status.configured).toBe(true);
     expect(status.learning.automatic).toBe(false);
   });
+
+  test('flags a pending proposal as stale once its target note changed', async () => {
+    const { call } = await session(makeVault());
+    await grant(call, 'amy', { sharedWriteProposal: true });
+    await call('POST', '/memory/proposals', {
+      as: 'amy',
+      path: 'Shared/s.md',
+      content: 'usul',
+      reason: 'alasan jelas',
+    });
+    expect(
+      (await call('GET', '/memory/proposals?status=pending')).json()
+        .proposals[0].stale,
+    ).toBe(false);
+    await put(call, 'leo', 'Shared/s.md', 'Leo lebih dulu');
+    expect(
+      (await call('GET', '/memory/proposals?status=pending')).json()
+        .proposals[0].stale,
+    ).toBe(true);
+  });
 });

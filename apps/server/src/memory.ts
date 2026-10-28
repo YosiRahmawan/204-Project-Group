@@ -270,7 +270,18 @@ export function registerMemoryRoutes(app: FastifyInstance, deps: Deps) {
         status: z.enum(['pending', 'approved', 'rejected']).optional(),
       })
       .parse(request.query);
-    return { proposals: proposals.list(status) };
+    // A pending proposal is stale when the note it would replace has changed since it was written.
+    const stale = (p: ReturnType<typeof proposals.get> & object) => {
+      if (!vault || p.status !== 'pending') return false;
+      try {
+        return vault.hashNow(p.path) !== p.baseHash;
+      } catch {
+        return true;
+      }
+    };
+    return {
+      proposals: proposals.list(status).map((p) => ({ ...p, stale: stale(p) })),
+    };
   });
 
   app.post('/memory/proposals/:id/decision', async (request, reply) => {

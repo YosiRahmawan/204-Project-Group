@@ -9,6 +9,7 @@ import { Stats } from '../tasks/StatsPanel';
 import { ActivityLog } from '../tasks/ActivityLog';
 import { AgentsPage } from '../agents/AgentsPage';
 import { AffiliatePage } from '../affiliate/AffiliatePage';
+import { MemoryPage } from '../memory/MemoryPage';
 
 export function OfficeReference() {
   const [failed, setFailed] = useState(false);
@@ -135,6 +136,7 @@ export function PageContent({
   if (page === 'approvals') return <ApprovalInbox />;
   if (page === 'team') return <AgentsPage />;
   if (page === 'affiliate') return <AffiliatePage />;
+  if (page === 'memory') return <MemoryPage />;
   if (page === 'settings')
     return (
       <section className="settings-page">
