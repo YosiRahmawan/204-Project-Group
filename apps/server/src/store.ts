@@ -10,6 +10,7 @@ import type {
   Task,
 } from '@204/contracts';
 import { agentSchema } from './agents.js';
+import { campaignSchema } from './campaigns.js';
 
 const schema = `
 CREATE TABLE IF NOT EXISTS tasks (
@@ -73,6 +74,7 @@ export function openDatabase(path: string) {
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(schema);
   db.exec(agentSchema);
+  db.exec(campaignSchema);
   return db;
 }
 

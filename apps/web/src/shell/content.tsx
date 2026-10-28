@@ -8,6 +8,7 @@ import { ApprovalInbox, TaskBoard } from '../tasks/TaskPages';
 import { Stats } from '../tasks/StatsPanel';
 import { ActivityLog } from '../tasks/ActivityLog';
 import { AgentsPage } from '../agents/AgentsPage';
+import { AffiliatePage } from '../affiliate/AffiliatePage';
 
 export function OfficeReference() {
   const [failed, setFailed] = useState(false);
@@ -133,6 +134,7 @@ export function PageContent({
   if (page === 'activity') return <ActivityLog />;
   if (page === 'approvals') return <ApprovalInbox />;
   if (page === 'team') return <AgentsPage />;
+  if (page === 'affiliate') return <AffiliatePage />;
   if (page === 'settings')
     return (
       <section className="settings-page">

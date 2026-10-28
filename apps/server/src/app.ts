@@ -19,6 +19,8 @@ import { cleanName, sniffType } from './files.js';
 import { createStore, openDatabase } from './store.js';
 import { createAgents, loadRegistry } from './agents.js';
 import { registerAgentRoutes } from './agent-routes.js';
+import { createCampaigns } from './campaigns.js';
+import { registerCampaignRoutes } from './campaign-routes.js';
 
 const publicPaths = new Set(['/health', '/auth/login']);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -39,7 +41,12 @@ const decisionBody = z.object({
 });
 const idempotencyKey = z.string().min(8).max(100);
 
-export function createApp(config: Config, logging = false) {
+// `fetchImpl` lets tests stand in for the AI provider.
+export function createApp(
+  config: Config,
+  logging = false,
+  fetchImpl?: typeof fetch,
+) {
   const app = Fastify({
     logger: logging
       ? {
@@ -175,14 +182,26 @@ export function createApp(config: Config, logging = false) {
 
   const agents = createAgents(db);
   agents.seed();
+  const registry = loadRegistry(
+    config.MODEL_REGISTRY_PATH ??
+      fileURLToPath(new URL('../models.registry.json', import.meta.url)),
+  );
+  const audit = (action: string, detail: string) =>
+    store.audit('Leo', action, detail);
   registerAgentRoutes(app, {
     agents,
-    registry: loadRegistry(
-      config.MODEL_REGISTRY_PATH ??
-        fileURLToPath(new URL('../models.registry.json', import.meta.url)),
-    ),
+    registry,
     env: process.env,
-    audit: (action, detail) => store.audit('Leo', action, detail),
+    audit,
+    announce,
+  });
+  registerCampaignRoutes(app, {
+    campaigns: createCampaigns(db),
+    agents,
+    registry,
+    env: process.env,
+    ...(fetchImpl ? { fetchImpl } : {}),
+    audit,
     announce,
   });
 

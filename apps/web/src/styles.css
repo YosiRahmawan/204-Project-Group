@@ -1788,3 +1788,27 @@ a.feed-time {
     grid-template-columns: 1fr;
   }
 }
+
+/* Affiliate Studio */
+.scene {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.scene textarea,
+.scene input {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12px;
+}
+.scene input {
+  width: 90px;
+}
+.tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

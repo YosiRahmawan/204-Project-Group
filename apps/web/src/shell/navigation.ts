@@ -25,6 +25,11 @@ export const pages = [
     description: 'Enam keahlian. Satu tujuan bersama.',
   },
   {
+    id: 'affiliate',
+    label: 'AI Affiliate Studio',
+    description: 'Dari produk menjadi konten yang siap Anda setujui.',
+  },
+  {
     id: 'monitoring',
     label: 'Monitoring AI',
     description: 'Visibilitas atas eksekusi dan biaya AI.',

@@ -21,6 +21,10 @@ Data ada di `apps/server/data/` (database `204.db` dan folder `uploads/`), diaba
 
 Halaman Tim & agent kini menyimpan konfigurasi enam agent bawaan dan agent baru di database (`+ Add Agent`, Edit, Aktifkan/Nonaktifkan): peran, atasan, provider/model, system prompt, izin dan alat, memori, batas sumber daya. Ini **hanya konfigurasi**: belum ada AI yang dijalankan, jadi status runtime selalu "Not Connected" ("AI execution is not configured yet."). Daftar provider/model ada di `apps/server/models.registry.json` (tambah model di sana). Kunci API hanya dari env server, tidak pernah dikirim ke browser. Persetujuan wajib (hapus data, deployment, rahasia, pesan keluar, transaksi keuangan, tulis memori bersama) selalu ditambahkan server dan tidak bisa dimatikan lewat prompt.
 
+## AI Affiliate Studio (Fase 1)
+
+Menu **AI Affiliate Studio**: campaign berisi produk, link afiliasi, hook/script, caption, hashtag, dan storyboard, disimpan di database. Semua teks bisa diedit dan disetujui Leo; mengedit setelah disetujui mengembalikan status ke Draft. Draf AI memakai agent Aeri (script, caption) dan Kuro (storyboard) lewat Anthropic dan hanya berjalan bila agent itu sudah diatur di Tim & agent (provider, model, anggaran token lebih dari 0) dan `ANTHROPIC_API_KEY` ada di server; selain itu server menolak dengan alasan yang jelas. Link tidak pernah dibuka atau di-scrape, dan tidak ada posting otomatis (unduh caption lalu posting manual). Editor video, musik, voice-over, tren, dan analytics belum ada.
+
 ## Pemeriksaan
 
 `corepack pnpm lint`, `typecheck`, `test`, `build`, `format:check`. Semuanya juga dijalankan GitHub Actions (`.github/workflows/ci.yml`) pada setiap push ke main dan pull request.
